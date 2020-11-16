@@ -34,6 +34,9 @@ if (!file.exists(dataDir)){
 tracDir <-file.path(dataDir, "02_tracts")
 if (!file.exists(tracDir)){
   dir.create(tracDir)
+  fileConn<-file(file.path(expDir,"readme.txt"))
+  writeLines(c("This directory contains census shape files","downloaded via the R package tigris"), fileConn)
+  close(fileConn)
 } 
 
 #------------------Functions--------------------------------------------------
@@ -43,12 +46,13 @@ downloadYear_tr <-function(year){
   #only for for Chicago for test purposes
   chi_counties <- c("Cook", "DeKalb", "DuPage", "Grundy", "Lake", 
                     "Kane", "Kendall", "McHenry", "Will County")
+  
+  print(paste("Downloading tracts for",year))
   tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year)
+  print(paste("Successfully downloaded Ptracts for",year))
   
   filepath<-getFilePath_tr(year)
   saveRDS(tracts, filepath)
-  
-
 }
 
 
@@ -61,6 +65,8 @@ getFilePath_tr <-function(year){
 
 #plot
 #https://community.rstudio.com/t/best-packages-for-making-map-leaflet-vs-ggmap-vs-sf-vs/38403/2
+#https://geocompr.robinlovelace.net/adv-map.html
+#https://bookdown.org/lexcomber/brunsdoncomber2e/Ch7.html#the-pennsylvania-ling-cancer-data
 plotTracts <-function(tracts){
   #TODO tmap
   leaflet(tracts) %>%

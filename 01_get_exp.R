@@ -40,6 +40,9 @@ if (!file.exists(dataDir)){
 expDir <-file.path(dataDir, "01_exposure")
 if (!file.exists(expDir)){
   dir.create(expDir)
+  fileConn<-file(file.path(expDir,"readme.txt"))
+  writeLines(c("This directory contains PM exposure data","downloaded from ftp://stetson.phys.dal.ca/jmeng/HEI2018-HistoricalPM25/historicalPM25/"), fileConn)
+  close(fileConn)
 } 
 
 #------------------Functions--------------------------------------------------
@@ -73,15 +76,16 @@ getExposureH5F <- function(year){
   if (!file.exists(filepath)){
     downloadYear(year)
   }
-  h5f = H5Fopen(filepath)
-  return(h5f)
+  exp_data = H5Fopen(filepath)
+  return(exp_data)
   #TODO return
 }
 
 getExposure <- function(year, long, lat){
+  exp_data <- getExposureH5F(year)
   #TODO
 }
 
 #------------------run tests--------------------------------------------------
 year<-2016
-getExposure(year)
+getExposureH5F(year)
