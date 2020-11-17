@@ -46,9 +46,9 @@ if (!file.exists(expDir)){
 } 
 
 tmpDir <-file.path(dataDir, "tmp")
-if (!file.exists(expDir)){
+if (!file.exists(tmpDir)){
   dir.create(tmpDir)
-  fileConn<-file(file.path(expDir,"readme.txt"))
+  fileConn<-file(file.path(tmpDir,"readme.txt"))
   writeLines(c("This directory contains variables used in calculations"), fileConn)
   close(fileConn)
 } 
@@ -83,8 +83,11 @@ downloadYear <-function(year){
   m_min_lat<-min(lat_dif) 
   m_max_lat<-max(lat_dif)
   
-  #save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = "data.RData")
-  #TODO save
+  
+  filename <-paste("m_exp_",toString(year),".RData", sep = "")
+  filepath <- file.path(tmpDir, filename)
+  save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepath)
+  #TODO check
 }
 
 #getter functions
@@ -148,13 +151,12 @@ getExposure <- function(year, long, lat){
                   round(digit=2) %>%
                   sum(-0.005)
   
-  
-  #findInterval
-  #binsearch
-  #https://stackoverflow.com/questions/20133344/find-closest-value-in-a-vector-with-binary-search
-  #http://adomingues.github.io/2015/09/24/finding-closest-element-to-a-number-in-a-list/
+
   #TODO divide by 100
 }
 
 #------------------run tests--------------------------------------------------
+
+getExposureH5F(2016)
+
 
