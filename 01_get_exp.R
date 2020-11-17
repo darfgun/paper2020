@@ -62,7 +62,7 @@ downloadYear <-function(year){
   }
   url<-"ftp://stetson.phys.dal.ca/jmeng/HEI2018-HistoricalPM25/historicalPM25/"
   filename<-getFileName(year)
-  filepath<-getFilePath(year)
+  filepath<-getFilePathExp(year)
   print(paste("Downloading PM exposure data for",year))
   download.file(paste(url, filename, sep = ""), filepath)
   print(paste("Successfully downloaded PM exposure data for",year))
@@ -83,11 +83,8 @@ downloadYear <-function(year){
   m_min_lat<-min(lat_dif) 
   m_max_lat<-max(lat_dif)
   
-  
-  filename <-paste("m_exp_",toString(year),".RData", sep = "")
-  filepath <- file.path(tmpDir, filename)
+  filepath <- getFilePathExp(year)
   save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepath)
-  #TODO check
 }
 
 #getter functions
@@ -95,14 +92,21 @@ getFileName<-function(year){
   return(paste(toString(year),".h5", sep = ""))
 }
 
-getFilePath <-function(year){
+getFilePathExp <-function(year){
   filename<-getFileName(year)
   filepath <- file.path(expDir, filename)
   return(filepath)
 }
 
+getFilePathMExp<-function(year){
+  filename <-paste("m_exp_",toString(year),".RData", sep = "")
+  filepath <- file.path(tmpDir, filename)
+  return(filepath)
+} 
+
+
 getExposureH5F <- function(year){
-  filepath<- getFilePath(year)
+  filepath<- getFilePathExp(year)
   if (!file.exists(filepath)){
     downloadYear(year)
   }
@@ -113,6 +117,7 @@ getExposureH5F <- function(year){
 
 
 getExposure <- function(year, long, lat){
+  year<-2016
   
   exp_data <- getExposureH5F(year)
   
@@ -120,13 +125,11 @@ getExposure <- function(year, long, lat){
   lat_vec <- c(as.matrix(exp_data$latitude))
   
   #make sure in grid
-  n<-length(long_vec)-1
-  a<-long_vec[2:(1+n)]-long_vec[1:n]
-  m_min_long<-min(a) #TODO save
-  m_max_long<-max(a)
+  filepath <- getFilePathMExp(year)
+  load(filepath)
   
-  #test todo delete
-  year<-2016
+  #test #TODO delete
+  
   #ru <-runif(1, min=-140,max=-120)
   #for(long in ru){
   long<-120.5056
@@ -139,7 +142,7 @@ getExposure <- function(year, long, lat){
   r2<-ceiling(1+(long_clos-long_vec[1])/m_min_long)
   subset<-long_vec[r1:r2]
   r_final <- r1+which.min(abs(long_vec[r1:r2]-long_clos))-1 #TODO pipe
-  r_final2 <- long_vec[r1:r2]-long_clos #%>%
+  #r_final2 <- long_vec[r1:r2]-long_clos #%>%
                   #abs %>%
                   #which.min %>%
                   #sum(r1-1)
@@ -150,13 +153,14 @@ getExposure <- function(year, long, lat){
                   max(lat_vec[1]) %>%
                   round(digit=2) %>%
                   sum(-0.005)
-  
 
   #TODO divide by 100
 }
 
+
+
 #------------------run tests--------------------------------------------------
 
-getExposureH5F(2016)
+tmp<-getExposureH5F(2016)
 
 
