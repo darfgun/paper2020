@@ -127,36 +127,40 @@ getLongVec <- function(exp_data){
 
 getExposure <- function(year, long, lat){
   
-  exp_data <- getExposureH5F(year)
+  year <- 2016 #TODO delete
+  long <- -120.5056
+  lat <- -120
   
-  long_vec <-  c(as.matrix(exp_data$longitude)) 
-  #long_vec <-  getLatVec(exp_data) 
+  exp_data <- getExposureH5F(year)
+  long_vec <-  getLatVec(exp_data) 
   lat_vec <- getLongVec(exp_data)
   
   #make sure in grid
   filepathM <- getFilePathMExp(year)
   load(filepathM)
   
-  #test #TODO delete
-  
-  #ru <-runif(1, min=-140,max=-120)
-  #for(long in ru){
-  long<-120.5056
-  long_clos <- sum(long,0.005)%>%
+  #closest coordinate in grid
+  long_clos <- sum(long,0.005)%>% 
                   round(.,digit=2) %>%
                   sum(-0.005) %>%
                   min(.,long_vec[length(long_vec)]) %>%
                   max(.,long_vec[1]) 
-  r1<-floor(1+(long_clos-long_vec[1])/m_max_long)
-  r2<-ceiling(1+(long_clos-long_vec[1])/m_min_long)
-  subset<-long_vec[r1:r2]
-  r_final <- r1+which.min(abs(long_vec[r1:r2]-long_clos))-1 #TODO pipe
-  #r_final2 <- long_vec[r1:r2]-long_clos #%>%
-                  #abs %>%
-                  #which.min %>%
-                  #sum(r1-1)
-
-  #}
+  
+  r1<-1+((long_clos-long_vec[1])/m_max_long) %>%
+                floor
+  r2<-1+((long_clos-long_vec[1])/m_min_long) %>%
+                ceiling
+  
+  subset<-long_vec[r1:r2] #subset, where long is most likely located
+  
+  r_final <- (subset-long_clos) %>%
+                  abs %>% 
+                  which.min %>%
+                  sum(r1-1)
+  
+  #print(c(r_final,r_final2))
+  #}#TODO delete
+  
   
   lat_clos <- min(lat,lat_vec[length(lat_vec)]) %>%
                   max(lat_vec[1]) %>%
@@ -171,6 +175,7 @@ getExposure <- function(year, long, lat){
 #------------------run tests--------------------------------------------------
 
 tmp<-getExposureH5F(2016)
-tmp$longitude #TODO !!!! does weird stuff
+#tmp$exposure
+
 
 
