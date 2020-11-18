@@ -62,13 +62,13 @@ downloadYear <-function(year){
   }
   url<-"ftp://stetson.phys.dal.ca/jmeng/HEI2018-HistoricalPM25/historicalPM25/"
   filename<-getFileName(year)
-  filepath<-getFilePathExp(year)
+  filepathExp<-getFilePathExp(year)
   print(paste("Downloading PM exposure data for",year))
-  download.file(paste(url, filename, sep = ""), filepath)
+  download.file(paste(url, filename, sep = ""), filepathExp)
   print(paste("Successfully downloaded PM exposure data for",year))
   
   #save useful variable #TODO
-  exp_data <- H5Fopen(filepath)
+  exp_data <- H5Fopen(filepathExp)
   
   long_vec <-  getLatVec(exp_data) 
   lat_vec <- getLongVec(exp_data)
@@ -83,8 +83,8 @@ downloadYear <-function(year){
   m_min_lat<-min(lat_dif) 
   m_max_lat<-max(lat_dif)
   
-  filepath <- getFilePathExp(year)
-  save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepath)
+  filepathM <- getFilePathMExp(year)
+  #save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepathM)
 }
 
 #------getter functions-----
@@ -94,24 +94,24 @@ getFileName<-function(year){
 
 getFilePathExp <-function(year){
   filename<-getFileName(year)
-  filepath <- file.path(expDir, filename)
-  return(filepath)
+  filepathExp <- file.path(expDir, filename)
+  return(filepathExp)
 }
 
 getFilePathMExp<-function(year){
   filename <-paste("m_exp_",toString(year),".RData", sep = "")
-  filepath <- file.path(tmpDir, filename)
-  return(filepath)
+  filepathM <- file.path(tmpDir, filename)
+  return(filepathM)
 } 
 
 
 getExposureH5F <- function(year){
   
-  filepath<- getFilePathExp(year)
-  if (!file.exists(filepath)){
+  filepathExp<- getFilePathExp(year)
+  if (!file.exists(filepathExp)){
     downloadYear(year)
   }
-  exp_data <- H5Fopen(filepath)
+  exp_data <- H5Fopen(filepathExp)
   return(exp_data)
 }
 
@@ -132,8 +132,8 @@ getExposure <- function(year, long, lat){
   lat_vec <- getLongVec(exp_data)
   
   #make sure in grid
-  filepath <- getFilePathMExp(year)
-  load(filepath)
+  filepathM <- getFilePathMExp(year)
+  load(filepathM)
   
   #test #TODO delete
   
