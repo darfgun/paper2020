@@ -67,24 +67,26 @@ downloadYear <-function(year){
   download.file(paste(url, filename, sep = ""), filepathExp)
   print(paste("Successfully downloaded PM exposure data for",year))
   
-  #save useful variable #TODO
-  exp_data <- H5Fopen(filepathExp)
-  
-  long_vec <-  getLatVec(exp_data) 
-  lat_vec <- getLongVec(exp_data)
-  
-  n_long<-length(long_vec)-1
-  long_dif<-long_vec[2:(1+n_long)]-long_vec[1:n_long]
-  m_min_long<-min(long_dif) 
-  m_max_long<-max(long_dif)
-  
-  n_lat<-length(lat_vec)-1
-  lat_dif<-lat_vec[2:(1+n_lat)]-lat_vec[1:n_lat]
-  m_min_lat<-min(lat_dif) 
-  m_max_lat<-max(lat_dif)
-  
+  #save useful variable 
   filepathM <- getFilePathMExp(year)
-  #save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepathM)
+  if (!file.exists(filepathM)){
+    exp_data <- H5Fopen(filepathExp)
+    
+    long_vec <-  getLatVec(exp_data) 
+    lat_vec <- getLongVec(exp_data)
+    
+    n_long<-length(long_vec)-1
+    long_dif<-long_vec[2:(1+n_long)]-long_vec[1:n_long]
+    m_min_long<-min(long_dif) 
+    m_max_long<-max(long_dif)
+    
+    n_lat<-length(lat_vec)-1
+    lat_dif<-lat_vec[2:(1+n_lat)]-lat_vec[1:n_lat]
+    m_min_lat<-min(lat_dif) 
+    m_max_lat<-max(lat_dif)
+    
+    save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepathM)
+  }
 }
 
 #------getter functions-----
