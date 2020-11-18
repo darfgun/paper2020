@@ -70,8 +70,8 @@ downloadYear <-function(year){
   #save useful variable #TODO
   exp_data <- H5Fopen(filepath)
   
-  long_vec <-  c(as.matrix(exp_data$longitude)) 
-  lat_vec <- c(as.matrix(exp_data$latitude))
+  long_vec <-  getLatVec(exp_data) 
+  lat_vec <- getLongVec(exp_data)
   
   n_long<-length(long_vec)-1
   long_dif<-long_vec[2:(1+n_long)]-long_vec[1:n_long]
@@ -87,7 +87,7 @@ downloadYear <-function(year){
   save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepath)
 }
 
-#getter functions
+#------getter functions-----
 getFileName<-function(year){
   return(paste(toString(year),".h5", sep = ""))
 }
@@ -106,23 +106,30 @@ getFilePathMExp<-function(year){
 
 
 getExposureH5F <- function(year){
+  
   filepath<- getFilePathExp(year)
   if (!file.exists(filepath)){
     downloadYear(year)
   }
   exp_data <- H5Fopen(filepath)
   return(exp_data)
-  #TODO return
 }
 
+getLatVec<-function(exp_data){ #TODO more efficient
+  return(c(as.matrix(exp_data$longitude)))
+}
+
+getLongVec <- function(exp_data){
+  return(c(as.matrix(exp_data$latitude)))
+}
 
 getExposure <- function(year, long, lat){
-  year<-2016
   
   exp_data <- getExposureH5F(year)
   
-  long_vec <-  c(as.matrix(exp_data$longitude)) #TODO more efficient
-  lat_vec <- c(as.matrix(exp_data$latitude))
+  long_vec <-  c(as.matrix(exp_data$longitude)) 
+  #long_vec <-  getLatVec(exp_data) 
+  lat_vec <- getLongVec(exp_data)
   
   #make sure in grid
   filepath <- getFilePathMExp(year)
@@ -162,5 +169,6 @@ getExposure <- function(year, long, lat){
 #------------------run tests--------------------------------------------------
 
 tmp<-getExposureH5F(2016)
+tmp$longitude #TODO !!!! does weird stuff
 
 
