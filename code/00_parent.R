@@ -13,14 +13,12 @@ rm(list=ls(all=TRUE))
 # runtime configuration
 runscript <-function(script, args=""){}
 if (Sys.info()["sysname"] == "Darwin") {
-  exec <- "/usr/bin/Rscript"
-  exec <- shQuote(exec)
-  runscript <-function(script, args=""){} #TODO
+  runscript <-function(script, args=""){system(paste("Rscript", download.script, args))} 
   
 } else if (Sys.info()["sysname"] == "Windows"){
   exec <- paste("C:/Program Files/R/R-",R.Version()$major,".",R.Version()$minor,"/bin/Rscript.exe",sep="") 
   exec <- shQuote(exec)
-  runscript <-function(script, args=""){system(paste(exec, " --vanilla ", download.script, sep=""))}
+  runscript <-function(script, args=""){system(paste(exec, "--vanilla", download.script, args))}
   
 }else if (Sys.info()["sysname"] == "Linux"){
   #https://stackoverflow.com/questions/3560641/running-an-rscript-on-mac-os-x
@@ -77,6 +75,5 @@ years <- c(2010)
 # Run code
 for(year in years){
   runscript(script=download.script)
-  
 }
 
