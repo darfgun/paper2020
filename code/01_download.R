@@ -9,8 +9,7 @@
 rm(list=ls(all=TRUE))
 
 # load packages, install if missing #TODO here?
-
-packages <- c("RCurl","magrittr")
+packages <- c("RCurl","magrittr", "tigris")
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -30,10 +29,12 @@ library(rhdf5)
 
 # Pass in arguments
 args <- commandArgs(trailingOnly=T)
-dataDir <- args[1]
-expDir <- args[2]
+year <- args[1]
+dataDir <- args[2]
 tmpDir <- args[3]
-year <- args[4]
+expDir <- args[4]
+tracDir <- args[5]
+censDir <- args[6]
 
 
 
@@ -48,7 +49,7 @@ if (!file.exists(filepathExp)){
   print(paste("Successfully downloaded PM exposure data for",year))
 }
 
-#save useful variable 
+#save useful variable for estimations later on
 filenameM <-paste("m_exp_",toString(year),".RData", sep = "")
 filepathM <- file.path(tmpDir, filenameM)
 if (!file.exists(filepathM)){
@@ -69,4 +70,27 @@ if (!file.exists(filepathM)){
   
   save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepathM)
 }
-###--------download
+
+rm(filenameExp, filepathExp) #TODO
+rm(filenameM, filepathM)
+
+###------------------download tract shape files--------------------
+#only for for Chicago for test purposes
+filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
+filepathTr <- file.path(tracDir, filenameTr)
+
+if (!file.exists(filepathTr)){
+  chi_counties <- c("Cook", "DeKalb", "DuPage", "Grundy", "Lake", 
+                    "Kane", "Kendall", "McHenry", "Will County")
+  
+  print(paste("Downloading tracts for",year))
+  tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year)
+  print(paste("Successfully downloaded tracts for",year))
+  
+  saveRDS(tracts, filepathTr) #TODO other format?
+}
+
+rm(filenameTr, filepathTr)
+
+###------------------download census data files--------------------
+#TODO

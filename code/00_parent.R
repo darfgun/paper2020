@@ -27,6 +27,7 @@ if (Sys.info()["sysname"] == "Darwin") {
     print(paste("no handler for", Sys.info()["sysname"], "implemented yet."))
 }
 
+##----------------directories---------
 #create data directory, setwd
 code.dir<-dirname(rstudioapi::getSourceEditorContext()$path)
 h_root<-dirname(code.dir) 
@@ -38,7 +39,16 @@ if (!file.exists(dataDir)){
   dir.create(dataDir)
 } 
 
-#directory, where PM expsure data will be downloaded to
+#directory contains variables used in calculations
+tmpDir <-file.path(dataDir, "tmp")
+if (!file.exists(tmpDir)){
+  dir.create(tmpDir)
+  fileConn<-file(file.path(tmpDir,"readme.txt"))
+  writeLines(c("This directory contains variables used in calculations"), fileConn)
+  close(fileConn)
+} 
+
+#directory for downloaded PM exposure data
 expDir <-file.path(dataDir, "01_exposure")
 if (!file.exists(expDir)){
   dir.create(expDir)
@@ -47,12 +57,30 @@ if (!file.exists(expDir)){
   close(fileConn)
 } 
 
-#directory contains variables used in calculations
-tmpDir <-file.path(dataDir, "tmp")
-if (!file.exists(tmpDir)){
-  dir.create(tmpDir)
-  fileConn<-file(file.path(tmpDir,"readme.txt"))
-  writeLines(c("This directory contains variables used in calculations"), fileConn)
+#directory for downloaded tract shape files
+tracDir <-file.path(dataDir, "02_tracts")
+if (!file.exists(tracDir)){
+  dir.create(tracDir)
+  fileConn<-file(file.path(tracDir,"readme.txt"))
+  writeLines(c("This directory contains census shape files","downloaded via the R package tigris"), fileConn)
+  close(fileConn)
+} 
+
+#this directory contains calculated year - census tract - pm level tuples
+exp_tracDir <-file.path(dataDir, "03_exp_tracts")
+if (!file.exists(exp_tracDir)){
+  dir.create(exp_tracDir)
+  fileConn<-file(file.path(exp_tracDir,"readme.txt"))
+  writeLines(c("This directory contains calculated year - census tract - pm level tuples"), fileConn)
+  close(fileConn)
+} 
+
+#directory for downloaded census data
+censDir <-file.path(dataDir, "04_census")
+if (!file.exists(censDir)){
+  dir.create(censDir)
+  fileConn<-file(file.path(censDir,"readme.txt"))
+  writeLines(c("This directory contains census shape files","downloaded via the R package tigris"), fileConn)
   close(fileConn)
 } 
 
@@ -74,10 +102,12 @@ years <- c(2010)
 
 # Run code
 for(year in years){
-  args <- paste(dataDir,
-                expDir,
+  args <- paste(year,
+                dataDir,
                 tmpDir,
-                year)
+                expDir,
+                tracDir,
+                censDir)
   
   runscript(script=download.script, args = args)
 }
