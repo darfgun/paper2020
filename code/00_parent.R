@@ -12,11 +12,13 @@ rm(list=ls(all=TRUE))
 
 # runtime configuration
 if (Sys.info()["sysname"] == "Darwin") {
-
   exec <- "/usr/bin/Rscript"
+  exec <- shQuote(exec)
+  
 } else if (Sys.info()["sysname"] == "Windows"){
-  #R.Version()$major,".",R.Version()$minor
-  exec <- "C:/Program Files/R/R-2.15.2/bin/Rscript.exe" #TODO
+  exec <- paste("C:/Program Files/R/R-",R.Version()$major,".",R.Version()$minor,"/bin/Rscript.exe",sep="") #TODO
+  exec <- shQuote(exec)
+  
 }else if (Sys.info()["sysname"] == "Linux"){
   #https://stackoverflow.com/questions/3560641/running-an-rscript-on-mac-os-x
   
@@ -73,23 +75,27 @@ for(year in years){
   #TODO
   
   #args <- paste("test")
-  command <- "open \'/usr/bin/Rscript\' \'/Users/usr/Documents/Shares.R\'"
+  #command <- "open \'/usr/bin/Rscript\' \'/Users/usr/Documents/Shares.R\'"
   #command <- paste(exec, " ",download.script, sep="")
+  
+  
+  command <- paste(exec, " --vanilla ", download.script, sep="")
   command
   system(command)
   
-  args <- paste(output.version,
-                draws.required,
-                year,
-                hap.stgpr.runid)
+  
+  #args <- paste(output.version,
+                #draws.required,
+                #year,
+                #hap.stgpr.runid)
   
   
-  mem <- "-l m_mem_free=2G"
-  fthread <- "-l fthread=5"
-  runtime <- "-l h_rt=01:00:00"
-  archive <- "" # no j-drive access needed
-  jname <- paste0("-N air_paf_cataract_",year)
+  #mem <- "-l m_mem_free=2G"
+  #fthread <- "-l fthread=5"
+  #runtime <- "-l h_rt=01:00:00"
+  #archive <- "" # no j-drive access needed
+  #jname <- paste0("-N air_paf_cataract_",year)
   
-  system(paste("qsub",jname,mem,fthread,runtime,archive,project,"-q all.q",sge.output.dir,rshell,cataract.calc.script,args))
+  #system(paste("qsub",jname,mem,fthread,runtime,archive,project,"-q all.q",sge.output.dir,rshell,cataract.calc.script,args))
 }
 
