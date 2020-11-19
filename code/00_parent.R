@@ -74,6 +74,11 @@ years <- c(2010)
 
 # Run code
 for(year in years){
-  runscript(script=download.script)
+  args <- paste(dataDir,
+                expDir,
+                tmpDir,
+                year)
+  
+  runscript(script=download.script, args = args)
 }
 
