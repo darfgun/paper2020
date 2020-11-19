@@ -12,21 +12,30 @@ rm(list=ls(all=TRUE))
 
 # runtime configuration
 if (Sys.info()["sysname"] == "Darwin") {
-  j#TODO
-} else {
+
+  exec <- "/usr/bin/Rscript"
+} else if (Sys.info()["sysname"] == "Windows"){
+  #R.Version()$major,".",R.Version()$minor
+  exec <- "C:/Program Files/R/R-2.15.2/bin/Rscript.exe" #TODO
+}else if (Sys.info()["sysname"] == "Linux"){
+  #https://stackoverflow.com/questions/3560641/running-an-rscript-on-mac-os-x
+  
+}else {
     print(paste("no handler for", Sys.info()["sysname"], "implemented yet."))
 }
 
 #create data directory, setwd
-h_root<-dirname(rstudioapi::getSourceEditorContext()$path)
+code.dir<-dirname(rstudioapi::getSourceEditorContext()$path)
+h_root<-dirname(code.dir) 
 setwd(h_root)
 
-subDir <- "data"
-dataDir <-file.path(h_root, subDir)
+#create directory, where downloaded and calculated data is stored
+dataDir <-file.path(h_root, "data")
 if (!file.exists(dataDir)){
   dir.create(dataDir)
 } 
 
+#directory, where PM expsure data will be downloaded to
 expDir <-file.path(dataDir, "01_exposure")
 if (!file.exists(expDir)){
   dir.create(expDir)
@@ -35,6 +44,7 @@ if (!file.exists(expDir)){
   close(fileConn)
 } 
 
+#directory contains variables used in calculations
 tmpDir <-file.path(dataDir, "tmp")
 if (!file.exists(tmpDir)){
   dir.create(tmpDir)
@@ -44,11 +54,10 @@ if (!file.exists(tmpDir)){
 } 
 
 #paths of scripts
-download.script <- file.path(h_root, '01_download.R')
+download.script <- file.path(code.dir, '01_download.R')
 
 # load packages, install if missing
-
-packages <- c()
+packages <- c() #"RCurl","magrittr" 
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -62,5 +71,25 @@ years <- c(2010)
 
 for(year in years){
   #TODO
+  
+  #args <- paste("test")
+  command <- "open \'/usr/bin/Rscript\' \'/Users/usr/Documents/Shares.R\'"
+  #command <- paste(exec, " ",download.script, sep="")
+  command
+  system(command)
+  
+  args <- paste(output.version,
+                draws.required,
+                year,
+                hap.stgpr.runid)
+  
+  
+  mem <- "-l m_mem_free=2G"
+  fthread <- "-l fthread=5"
+  runtime <- "-l h_rt=01:00:00"
+  archive <- "" # no j-drive access needed
+  jname <- paste0("-N air_paf_cataract_",year)
+  
+  system(paste("qsub",jname,mem,fthread,runtime,archive,project,"-q all.q",sge.output.dir,rshell,cataract.calc.script,args))
 }
 
