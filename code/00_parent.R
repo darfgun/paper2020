@@ -80,7 +80,7 @@ censDir <-file.path(dataDir, "04_census")
 if (!file.exists(censDir)){
   dir.create(censDir)
   fileConn<-file(file.path(censDir,"readme.txt"))
-  writeLines(c("This directory contains census shape files","downloaded via the R package tigris"), fileConn)
+  writeLines(c("This directory contains census data","downloaded via the R package censusapi"), fileConn)
   close(fileConn)
 } 
 
