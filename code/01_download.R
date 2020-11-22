@@ -15,7 +15,8 @@ for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
     install.packages(p)
   }
-  library(p, character.only = T)
+  
+  suppressWarnings(library(p, character.only = T))
 }
 options(tigris_use_cache = TRUE) 
 
@@ -26,7 +27,7 @@ if("rhdf5" %in% rownames(installed.packages())==FALSE){
   }
   BiocManager::install("rhdf5")
 }
-library(rhdf5)
+suppressWarnings(library(rhdf5))
 
 # Pass in arguments
 args <- commandArgs(trailingOnly=T)
@@ -35,8 +36,7 @@ dataDir <- args[2]
 tmpDir <- args[3]
 expDir <- args[4]
 tracDir <- args[5]
-censDir <- args[6]
-
+censDir <- args[7]
 
 
 #----------------------download exposure data-----------------

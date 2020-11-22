@@ -13,12 +13,12 @@ rm(list=ls(all=TRUE))
 # runtime configuration
 runscript <-function(script, args=""){}
 if (Sys.info()["sysname"] == "Darwin") {
-  runscript <-function(script, args=""){system(paste("Rscript", download.script, args))} 
+  runscript <-function(script, args=""){system(paste("Rscript", script, args))} 
   
 } else if (Sys.info()["sysname"] == "Windows"){
   exec <- paste("C:/Program Files/R/R-",R.Version()$major,".",R.Version()$minor,"/bin/Rscript.exe",sep="") 
   exec <- shQuote(exec)
-  runscript <-function(script, args=""){system(paste(exec, "--vanilla", download.script, args))}
+  runscript <-function(script, args=""){system(paste(exec, "--vanilla", script, args))}
   
 }else if (Sys.info()["sysname"] == "Linux"){
   #https://stackoverflow.com/questions/3560641/running-an-rscript-on-mac-os-x
@@ -86,9 +86,10 @@ if (!file.exists(censDir)){
 
 #paths of scripts
 download.script <- file.path(code.dir, '01_download.R')
+assignTract.script <- file.path(code.dir, '02_ass_trac.R')
 
 # load packages, install if missing
-packages <- c() #"RCurl","magrittr" 
+packages <- c() 
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -96,6 +97,8 @@ for(p in packages){
   }
   library(p, character.only = T)
 }
+
+
 
 #--------parameters of code-------------------
 years <- c(2010)
@@ -107,8 +110,10 @@ for(year in years){
                 tmpDir,
                 expDir,
                 tracDir,
+                exp_tracDir,
                 censDir)
   
-  runscript(script=download.script, args = args)
+  #runscript(script=download.script, args = args)
+  runscript(script=assignTract.script, args = args)
 }
 
