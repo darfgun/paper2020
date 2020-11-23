@@ -16,9 +16,9 @@ for(p in packages){
     install.packages(p)
   }
   
-  suppressWarnings(library(p, character.only = T))
+  suppressWarnings(library(p, character.only = T, warn.conflicts=FALSE))
 }
-options(tigris_use_cache = TRUE) 
+options(tigris_use_cache = FALSE) 
 
 #download rhdf5
 if("rhdf5" %in% rownames(installed.packages())==FALSE){
