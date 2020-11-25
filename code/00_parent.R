@@ -101,7 +101,7 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2010)
+years <- c(2011)
 
 # Run code
 for(year in years){
@@ -113,7 +113,7 @@ for(year in years){
                 exp_tracDir,
                 censDir)
   
-  #runscript(script=download.script, args = args)
-  runscript(script=assignTract.script, args = args)
+  runscript(script=download.script, args = args)
+  #runscript(script=assignTract.script, args = args)
 }
 

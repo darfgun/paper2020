@@ -86,7 +86,7 @@ if (!file.exists(filepathTr)){
                     "Kane", "Kendall", "McHenry", "Will County")
   
   print(paste("Downloading tracts for",year))
-  tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year)
+  tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
   print(paste("Successfully downloaded tracts for",year))
   
   saveRDS(tracts, filepathTr) #TODO other format?
