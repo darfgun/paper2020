@@ -120,17 +120,27 @@ tracts <-tracts$geometry %>% sapply(., function(tract){
                  points_subset[.,] %>%
                  pull(pm))
   }) %>% 
-    cbind(tracts, .)
+    cbind(tracts,pm= .)
 
 
 ##---------plot------- 
-if(TRUE){
+if(FALSE){
   gg <- ggplot()+ 
     geom_sf(data = tracts, color="black",
             fill="white")
   
   gg
+  #TODO save plot
 }
 
+##-----save as csv--------
+tracts <-tracts %>% 
+          as.data.frame %>%
+          within(., rm('geometry', 'LSAD', 'CENSUSAREA'))
 
-#TODO save to csv
+filenameExpTrac<-paste("exp_trac",toString(year),".csv", sep = "")
+filepathExpTrac <- file.path(exp_tracDir, filenameExpTrac)
+
+#tracts
+
+write.csv(tracts,filepathExpTrac, row.names = FALSE)
