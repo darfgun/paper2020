@@ -89,6 +89,8 @@ if (!file.exists(filepathTr)){
   tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
   print(paste("Successfully downloaded tracts for",year))
   
+  st_transform(tracts, 4326)
+  
   saveRDS(tracts, filepathTr) #TODO other format?
 }
 

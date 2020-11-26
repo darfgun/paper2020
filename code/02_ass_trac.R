@@ -11,7 +11,7 @@ rm(list=ls(all=TRUE))
 
 # load packages, install if missing #TODO here?
 
-packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr")#, "tmap"
+packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp")#, "tmap", TODO delete plyr
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -73,9 +73,9 @@ tracts<-readRDS(filepathTr)
 result <- data.frame()      #Doubles=double()
 
 
-
-for(i in seq_along(tracts)) { #
-  i<-50 #TODO l?schen
+#TODO optimze this by doing the whole process per county and not per tracts
+for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
+  i<-50 #TODO l?schen #6 gutes Beispiel
   tract <- tracts[i,]
   
   #get enclosing box, make sure in range of exposure data
@@ -89,8 +89,8 @@ for(i in seq_along(tracts)) { #
   lat_max <- bbox$ymax %>%
                     min(.,lat_vec[length(lat_vec)])
   
-  
-  long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>%
+  #estimate corresponding grid in pm exposure data
+  long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>% #TODO optimize here, if this takes too long (smallaer box)
                                                             floor
   lat_row_min <- -1+((lat_min-lat_vec[1])/m_max_lat) %>%
                                                             floor
@@ -103,64 +103,36 @@ for(i in seq_along(tracts)) { #
   lat_subset <- lat_vec[lat_row_min:lat_row_max]
   pm_subset <- exp_data[long_row_min:long_row_max,lat_row_min:lat_row_max]
   
-  subset <- expand.grid(longX = seq_along(long_subset), latX = seq_along(lat_subset), pm = NA) %>%
-    mutate(pm = pm_subset[longX,latX]) #,long = long_subset[long], lat = lat_subset[lat]
+  points_subset <- data.frame(lat = rep(lat_subset, times = length(long_subset)), 
+                       lng = rep(long_subset, each = length(lat_subset)), 
+                       pm = as.vector(t(pm_subset))) %>%
+                      st_as_sf(., coords = c("lng", "lat"), 
+                        crs = 4269,  #TODO same as st_crs(tract)
+                        agr = "constant")
+  
+  suppressWarnings(points_in_tract <- points_subset[tract, , op = st_within]) 
+  #use filter/st_filter instead? https://geocompr.robinlovelace.net/spatial-operations.html
   
   
-  #subset['pm'] <- NA
-  #https://stackoverflow.com/questions/48662248/apply-function-to-every-element-in-data-frame-and-return-data-frame/48662359
-  #https://community.rstudio.com/t/apply-function-to-each-row-in-a-df-and-create-a-new-df-with-the-outputs/38946/4
-  #subset[]
-  subset2 <- apply(subset, 1, FUN = function(long_ind, lat_ind){
-    #print(c("long",long_ind,"lat",lat_ind))
-    long <- long_subset[long_ind]
-    lat <- lat_subset[lat_ind]
-    pm <- pm_subset[long_ind,lat_ind]
-    return(c(long,lat,pm))
-  })
-  subset2<-as.data.frame(subset2)
-  subset2
-  #TODO convert to spatial data frame
-  
-  #bbox #TODO delete
-  #c( min(long_subset),  min(lat_subset),max(long_subset) ,max(lat_subset))
-  #asdfs<-c( (bbox$xmin >=min(long_subset)),  bbox$ymin >=min(lat_subset),bbox$xmax<= max(long_subset) ,bbox$ymax<=max(lat_subset))
-  #print(asdfs)
-  gg <- ggplot()
-  gg <- gg + geom_sf(data = row, color="black",
-                     fill="white", size=0.25)
-  
-  #https://stackoverflow.com/questions/4309217/cartesian-product-data-frame
-  
-  select <- matrix(ncol = 2, byrow = TRUE) 
-  
-  for(k in seq_along(long_subset)){
-    for(j in seq_along(lat_subset)){
-      coord <- c(long_subset[k], lat_subset[j])
-      point<-st_point(x = coord)
-      (sites <- data.frame(longitude = long_subset[k], latitude = lat_subset[j]))
-      (sites <- st_as_sf(sites, coords = c("longitude", "latitude"), 
-                         crs = 4326, agr = "constant"))
-      
-       gg <- gg + geom_sf(data = sites, size = 4, shape = 23, fill = "darkred")
-      
-      #if(st_within(point, row, sparse=FALSE)){ #TODO richtige Reihenfolge?, 
-      #  c <- c(k,j)
-      #  rbind(select,c) #TODO optimize?
-      #}
-    }
-  }
-  gg
-  
-  if(nrow(select)>0){
-    pm <- exp_data[long_row_min:long_row_max,lat_row_min:lat_row_max][select] 
-    #%>% mean
-  }else{
-    #TODO find closest, take that
-  }
+  #if there are points inside of the tract, the tract is assigned the mean of pm of those points
+  # if there are none, the pm of the closest point
+  pm <- ifelse(nrow(points_in_tract)>0,
+               mean(points_in_tract$pm),
+               st_centroid(tract) %>%
+                 which.min(st_distance(points_subset, .)) %>%
+                 points_subset[.,]$pm)/100
+ 
   #add_row(result, pm)
-  #TODO pm = pm/100
+  
 }
 
 
+#TODO save to csv
 
+gg <- ggplot()+ 
+  geom_sf(data = tract, color="black",
+          fill="white")+
+  geom_sf(data = points_subset, size = 4, shape = 23)+
+  geom_sf(data = r, size = 4, shape = 23, color="red")
+
+gg
