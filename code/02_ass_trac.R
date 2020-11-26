@@ -11,7 +11,7 @@ rm(list=ls(all=TRUE))
 
 # load packages, install if missing #TODO here?
 
-packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp")#, "tmap", TODO delete plyr
+packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp")#, "tmap"
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -73,9 +73,8 @@ tracts<-readRDS(filepathTr)
 result <- data.frame()      #Doubles=double()
 
 
-#TODO optimze this by doing the whole process per county and not per tracts
+#TODO optimze this by doing the whole process per county and not per tracts, group tibble
 for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
-  i<-50 #TODO l?schen #6 gutes Beispiel
   tract <- tracts[i,]
   
   #get enclosing box, make sure in range of exposure data
@@ -90,7 +89,8 @@ for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
                     min(.,lat_vec[length(lat_vec)])
   
   #estimate corresponding grid in pm exposure data
-  long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>% #TODO optimize here, if this takes too long (smallaer box)
+  #TODO optimize here, if this takes too long (smallaer box)
+  long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>% 
                                                             floor
   lat_row_min <- -1+((lat_min-lat_vec[1])/m_max_lat) %>%
                                                             floor
@@ -107,7 +107,7 @@ for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
                        lng = rep(long_subset, each = length(lat_subset)), 
                        pm = as.vector(t(pm_subset))) %>%
                       st_as_sf(., coords = c("lng", "lat"), 
-                        crs = 4269,  #TODO same as st_crs(tract)
+                        crs = st_crs(tract),
                         agr = "constant")
   
   suppressWarnings(points_in_tract <- points_subset[tract, , op = st_within]) 
@@ -116,11 +116,11 @@ for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
   
   #if there are points inside of the tract, the tract is assigned the mean of pm of those points
   # if there are none, the pm of the closest point
-  pm <- ifelse(nrow(points_in_tract)>0,
+  pm <- 0.01*ifelse(nrow(points_in_tract)>0,
                mean(points_in_tract$pm),
                st_centroid(tract) %>%
                  which.min(st_distance(points_subset, .)) %>%
-                 points_subset[.,]$pm)/100
+                 points_subset[.,]$pm)
  
   #add_row(result, pm)
   
