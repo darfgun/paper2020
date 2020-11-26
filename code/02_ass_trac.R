@@ -67,16 +67,11 @@ filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
 filepathTr <- file.path(tracDir, filenameTr)
 tracts<-readRDS(filepathTr)
 
-#calc
-#TODO GEO_ID vs tract vs Name
-
-result <- data.frame()      #Doubles=double()
-
+##-----------------calculation---------------
 
 #TODO optimze this by doing the whole process per county and not per tracts, group tibble
-for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
-  tract <- tracts[i,]
-  
+
+tracts <-tracts$geometry %>% sapply(., function(tract){
   #get enclosing box, make sure in range of exposure data
   bbox <- st_bbox(tract)
   long_min <- bbox$xmin %>%
@@ -103,6 +98,7 @@ for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
   lat_subset <- lat_vec[lat_row_min:lat_row_max]
   pm_subset <- exp_data[long_row_min:long_row_max,lat_row_min:lat_row_max]
   
+  
   points_subset <- data.frame(lat = rep(lat_subset, times = length(long_subset)), 
                        lng = rep(long_subset, each = length(lat_subset)), 
                        pm = as.vector(t(pm_subset))) %>%
@@ -110,29 +106,31 @@ for(i in seq_along(tracts)) { #TODO nicht for Schleife, sondern apply/mutate?
                         crs = st_crs(tract),
                         agr = "constant")
   
-  suppressWarnings(points_in_tract <- points_subset[tract, , op = st_within]) 
-  #use filter/st_filter instead? https://geocompr.robinlovelace.net/spatial-operations.html
-  
+  suppressMessages(points_in_tract <- points_subset[tract, , op = st_within]) 
   
   #if there are points inside of the tract, the tract is assigned the mean of pm of those points
   # if there are none, the pm of the closest point
-  pm <- 0.01*ifelse(nrow(points_in_tract)>0,
-               mean(points_in_tract$pm),
-               st_centroid(tract) %>%
-                 which.min(st_distance(points_subset, .)) %>%
-                 points_subset[.,]$pm)
- 
-  #add_row(result, pm)
+   pm <- 0.01*ifelse(nrow(points_in_tract)>0,
+               points_in_tract$pm %>%   
+                  mean(., na.rm = TRUE),
+               tract %>%
+                 suppressWarnings(st_centroid) %>% 
+                 st_distance(x=points_subset, y=.) %>% 
+                 which.min %>%
+                 points_subset[.,] %>%
+                 pull(pm))
+  }) %>% 
+    cbind(tracts, .)
+
+
+##---------plot------- 
+if(TRUE){
+  gg <- ggplot()+ 
+    geom_sf(data = tracts, color="black",
+            fill="white")
   
+  gg
 }
 
 
 #TODO save to csv
-
-gg <- ggplot()+ 
-  geom_sf(data = tract, color="black",
-          fill="white")+
-  geom_sf(data = points_subset, size = 4, shape = 23)+
-  geom_sf(data = r, size = 4, shape = 23, color="red")
-
-gg
