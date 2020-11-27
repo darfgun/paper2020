@@ -11,7 +11,7 @@ rm(list=ls(all=TRUE))
 
 # load packages, install if missing #TODO here?
 
-packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp","tmap")
+packages <- c("plyr","magrittr", "tigris", "sf", "tidyverse", "ggplot2", "sp","tmap")
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -33,28 +33,28 @@ suppressWarnings(library(rhdf5))
 
  
 # Pass in arguments
-#args <- commandArgs(trailingOnly=T)
-#year <- args[1]
-#dataDir <- args[2]
-#tmpDir <- args[3]
-#expDir <- args[4]
-#tracDir <- args[5]
-#exp_tracDir <- args[6]
+args <- commandArgs(trailingOnly=T)
+year <- args[1]
+dataDir <- args[2]
+tmpDir <- args[3]
+expDir <- args[4]
+tracDir <- args[5]
+exp_tracDir <- args[6]
 
 #test #TODO l?schen
 
-year <- 2010 #TODO delete
-dataDir <- "/Users/default/Desktop/own_code2/data"
-tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-expDir <- "/Users/default/Desktop/own_code2/data/01_exposure"
-tracDir <- "/Users/default/Desktop/own_code2/data/02_tracts"
-exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
+#year <- 2010 #TODO delete
+#dataDir <- "/Users/default/Desktop/own_code2/data"
+#tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
+#expDir <- "/Users/default/Desktop/own_code2/data/01_exposure"
+#tracDir <- "/Users/default/Desktop/own_code2/data/02_tracts"
+#exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
 
 
 filenameExpTrac<-paste("exp_trac",toString(year),".csv", sep = "")
 filepathExpTrac <- file.path(exp_tracDir, filenameExpTrac)
 
-#if (file.exists(filepathExpTrac)) quit() #TODO entkommentieren, testen
+if (file.exists(filepathExpTrac)) quit() #TODO entkommentieren, testen
 
 
 ##----------load data-----
@@ -146,9 +146,10 @@ if(TRUE){
 }
 
 ##-----save as csv--------
-
+#if(false){
 tracts <-tracts %>% 
           as.data.frame %>%
           within(., rm('geometry', 'LSAD', 'CENSUSAREA'))
 
 write.csv(tracts,filepathExpTrac, row.names = FALSE)
+#}
