@@ -8,17 +8,18 @@
 #clear memory
 rm(list=ls(all=TRUE))
 
-# load packages, install if missing #TODO here?
+# load packages, install if missing 
 packages <- c("RCurl","magrittr", "tigris", "censusapi")
 
+options(tigris_use_cache = FALSE) 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
     install.packages(p)
   }
   
-  suppressWarnings(library(p, character.only = T, warn.conflicts=FALSE))
+  suppressMessages(library(p, character.only = T, warn.conflicts=FALSE))
 }
-options(tigris_use_cache = FALSE) 
+
 
 #download rhdf5
 if("rhdf5" %in% rownames(installed.packages())==FALSE){
@@ -86,10 +87,10 @@ if (!file.exists(filepathTr)){
                     "Kane", "Kendall", "McHenry", "Will County")
   
   print(paste("Downloading tracts for",year))
-  tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
+  #tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
+  tracts <- tracts(state = "NY", cb = TRUE, year=year) #TODO error for some years
   print(paste("Successfully downloaded tracts for",year))
-  
-  saveRDS(tracts, filepathTr) #TODO other format?
+  saveRDS(tracts, filepathTr) 
 }
 
 rm(filenameTr, filepathTr)

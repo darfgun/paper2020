@@ -117,3 +117,6 @@ for(year in years){
   runscript(script=assignTract.script, args = args)
 }
 
+states()%>% as.data.frame %>% pull(REGION, NAME)
+  #pull("REGION","DIVISION","STATEFP","GEOID","NAME")
+
