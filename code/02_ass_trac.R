@@ -11,7 +11,7 @@ rm(list=ls(all=TRUE))
 
 # load packages, install if missing #TODO here?
 
-packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp")#, "tmap"
+packages <- c("magrittr", "tigris", "sf", "tidyverse", "ggplot2","plyr", "sp","tmap")
 
 for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
@@ -50,8 +50,16 @@ expDir <- "/Users/default/Desktop/own_code2/data/01_exposure"
 tracDir <- "/Users/default/Desktop/own_code2/data/02_tracts"
 exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
 
-##-----code-----
-#load data
+
+filenameExpTrac<-paste("exp_trac",toString(year),".csv", sep = "")
+filepathExpTrac <- file.path(exp_tracDir, filenameExpTrac)
+
+#if (file.exists(filepathExpTrac)) quit() #TODO entkommentieren, testen
+
+
+##----------load data-----
+
+#load exposure data
 filenameExp<-paste(toString(year),".h5", sep = "")
 filepathExp <- file.path(expDir, filenameExp)
 hdf_file <- H5Fopen(filepathExp)
@@ -59,10 +67,12 @@ exp_data <- as.matrix(hdf_file$CorrectedPM2.5)
 long_vec <-  c(as.matrix(hdf_file$longitude)) 
 lat_vec <- c(as.matrix(hdf_file$latitude))
 
+#load some useful estimates to optimize code
 filenameM <-paste("m_exp_",toString(year),".RData", sep = "")
 filepathM <- file.path(tmpDir, filenameM)
 load(filepathM)
 
+#load shape files of tracts
 filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
 filepathTr <- file.path(tracDir, filenameTr)
 tracts<-readRDS(filepathTr)
@@ -123,24 +133,22 @@ tracts <-tracts$geometry %>% sapply(., function(tract){
     cbind(tracts,pm= .)
 
 
-##---------plot------- 
-if(FALSE){
-  gg <- ggplot()+ 
-    geom_sf(data = tracts, color="black",
-            fill="white")
+##--------------plot-----------
+if(TRUE){
+  #tmap_mode("view")
+    
+  tm<-tm_shape(tracts) +
+       tm_polygons("pm")
   
-  gg
-  #TODO save plot
+  filenameExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") #png/html möglich
+  filepathExpTrac_plot <- file.path(exp_tracDir, filenameExpTrac_plot)
+  tmap_save(tm, filename = filepathExpTrac_plot) 
 }
 
 ##-----save as csv--------
+
 tracts <-tracts %>% 
           as.data.frame %>%
           within(., rm('geometry', 'LSAD', 'CENSUSAREA'))
-
-filenameExpTrac<-paste("exp_trac",toString(year),".csv", sep = "")
-filepathExpTrac <- file.path(exp_tracDir, filenameExpTrac)
-
-#tracts
 
 write.csv(tracts,filepathExpTrac, row.names = FALSE)
