@@ -11,7 +11,7 @@ rm(list=ls(all=TRUE))
 
 # load packages, install if missing 
 
-packages <- c("plyr","magrittr", "tigris", "sf", "tidyverse", "ggplot2", "sp","tmap","tictoc")
+packages <- c("plyr","magrittr", "tigris", "sf", "tidyverse", "sp","tmap","tictoc")
 
 options(tidyverse.quiet = TRUE)
 options(tigris.quiet = TRUE)
@@ -21,7 +21,6 @@ for(p in packages){
     install.packages(p)
   }
   suppressMessages(library(p, character.only = T, warn.conflicts=FALSE))
-  
 }
 
 #download rhdf5
@@ -43,8 +42,8 @@ expDir <- args[4]
 tracDir <- args[5]
 exp_tracDir <- args[6]
 
-filenameExpTrac<-paste("exp_trac",toString(year),".csv", sep = "")
-filepathExpTrac <- file.path(exp_tracDir, filenameExpTrac)
+filepathExpTrac<-paste("exp_trac",toString(year),".csv", sep = "") %>%
+                         file.path(exp_tracDir, .)
 
 #quit execution, if already calculated
 if (file.exists(filepathExpTrac)) quit() 
@@ -132,14 +131,12 @@ toc()
 ##--------------plot-----------
 #save everything as interactive map via tmap
 if(TRUE){
-  #tmap_mode("view")
-    
   tm<-tm_shape(tracts) +
        tm_polygons("pm", alpha = 0.6) 
-      
   
-  filenameExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") #png/html möglich
-  filepathExpTrac_plot <- file.path(exp_tracDir, filenameExpTrac_plot)
+  filepathExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") %>% #png/html möglich
+                                file.path(exp_tracDir, .)
+  
   tmap_save(tm, filename = filepathExpTrac_plot) 
 }
 

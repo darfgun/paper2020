@@ -101,7 +101,7 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2000)
+years <- c(2001)
 
 # Run code
 for(year in years){
@@ -117,6 +117,6 @@ for(year in years){
   runscript(script=assignTract.script, args = args)
 }
 
-states()%>% as.data.frame %>% pull(REGION, NAME)
+#states()%>% as.data.frame %>% pull(REGION, NAME)
   #pull("REGION","DIVISION","STATEFP","GEOID","NAME")
 

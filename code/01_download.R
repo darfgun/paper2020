@@ -9,7 +9,7 @@
 rm(list=ls(all=TRUE))
 
 # load packages, install if missing 
-packages <- c("RCurl","magrittr", "tigris", "censusapi")
+packages <- c("dplyr", "RCurl","magrittr", "tigris", "censusapi")
 
 options(tigris_use_cache = FALSE) 
 for(p in packages){
@@ -52,8 +52,9 @@ if (!file.exists(filepathExp)){
 }
 
 #save useful variable for estimations later on
-filenameM <-paste("m_exp_",toString(year),".RData", sep = "")
-filepathM <- file.path(tmpDir, filenameM)
+filepathM <- paste("m_exp_",toString(year),".RData", sep = "") %>%
+                    file.path(tmpDir, .)
+
 if (!file.exists(filepathM)){
   exp_data <- H5Fopen(filepathExp)
   
@@ -73,32 +74,39 @@ if (!file.exists(filepathM)){
   save(m_min_long, m_max_long, m_min_lat, m_max_lat, file = filepathM)
 }
 
-rm(filenameExp, filepathExp) #TODO
-rm(filenameM, filepathM)
+rm(filenameExp, filepathExp,filepathM) 
+
+##------download useful data to tmp-----
+filepathStates <- file.path(tmpDir, "states.csv")
+if (!file.exists(filepathStates)){
+  states<-states() %>%
+            as.data.frame %>%
+            select(c(1:3,6,7))
+      
+  write.csv(states,filepathStates, row.names = FALSE)
+}else{
+  states <- read.csv(filepathStates)
+}
+rm(filepathStates)
 
 ###------------------download tract shape files--------------------
-#only for for Chicago for test purposes
-filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
-filepathTr <- file.path(tracDir, filenameTr)
+filepathTr <- paste("tracts_",toString(year),".rds", sep = "") %>%
+                  file.path(tracDir, .)
 
 if (!file.exists(filepathTr)){
-  
-  chi_counties <- c("Cook", "DeKalb", "DuPage", "Grundy", "Lake", 
-                    "Kane", "Kendall", "McHenry", "Will County")
-  
   print(paste("Downloading tracts for",year))
   #tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
-  tracts <- tracts(state = "NY", cb = TRUE, year=year) #TODO error for some years
+  tracts <- tracts(state = "NY", cb = TRUE, year=year) #TODO error for some years, Fallunterscheidung?
   print(paste("Successfully downloaded tracts for",year))
   saveRDS(tracts, filepathTr) 
 }
 
-rm(filenameTr, filepathTr)
+rm(filepathTr)
 
 ###------------------download census data files--------------------
 
-filenameCens<-paste("census_",toString(year),".csv", sep = "") #TODO data frame as csv
-filepathCens <- file.path(censDir, filenameCens) 
+filepathCens<- paste("census_",toString(year),".csv", sep = "") %>% #TODO data frame as csv
+                        file.path(censDir, .) 
 
 # Add key to .Renviron
 key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" #TODO
@@ -115,6 +123,7 @@ if (!file.exists(filepathCens)){
   filepathReadMe <- file.path(censDir,"readme.txt")
   data_from_api <- data.frame()
   
+  #https://stackoverflow.com/questions/12379128/r-switch-statement-on-comparisons
   if(year == 2000){
     #dec/sf1
     #data_from_api <- getCensus(name = "dec/sf1", vintage = year,
