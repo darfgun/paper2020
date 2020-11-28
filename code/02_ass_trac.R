@@ -42,6 +42,7 @@ expDir <- args[4]
 tracDir <- args[5]
 exp_tracDir <- args[6]
 
+#TODO das ist jetzt auch komplizierter
 filepathExpTrac<-paste("exp_trac",toString(year),".csv", sep = "") %>%
                          file.path(exp_tracDir, .)
 
@@ -64,85 +65,95 @@ filenameM <-paste("m_exp_",toString(year),".RData", sep = "")
 filepathM <- file.path(tmpDir, filenameM)
 load(filepathM)
 
+
 #load shape files of tracts
+#TODO das ist jetzt komplizierter
 filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
 filepathTr <- file.path(tracDir, filenameTr)
 tracts<-readRDS(filepathTr)
 
-##-----------------calculation---------------
-
-#TODO optimze this by doing the whole process per county and not per tracts, group tibble
-
-tic(paste("Assigned pm exposure to each tract for year",toString(year)))
-#estimate pm exposure for each tract
-tracts <-tracts$geometry %>% sapply(., function(tract){
-  #get enclosing box, make sure in range of exposure data
-  bbox <- st_bbox(tract)
-  long_min <- bbox$xmin %>%
-                    max(.,long_vec[1])
-  lat_min <- bbox$ymin %>%
-                    max(.,lat_vec[1])
-  long_max <- bbox$xmax %>%
-                    min(.,long_vec[length(long_vec)]) 
-  lat_max <- bbox$ymax %>%
-                    min(.,lat_vec[length(lat_vec)])
-  
-  #estimate corresponding grid in pm exposure data
-  #TODO optimize here, if this takes too long (smaller box)
-  long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>% 
-                                                            floor
-  lat_row_min <- -1+((lat_min-lat_vec[1])/m_max_lat) %>%
-                                                            floor
-  long_row_max<-1+((long_max-long_vec[1])/m_min_long) %>%
-                                                            ceiling
-  lat_row_max<-1+((lat_max-lat_vec[1])/m_min_lat) %>%
-                                                            ceiling
-  
-  long_subset<-long_vec[long_row_min:long_row_max]
-  lat_subset <- lat_vec[lat_row_min:lat_row_max]
-  pm_subset <- exp_data[long_row_min:long_row_max,lat_row_min:lat_row_max]
-  
-  #estimates, where to look for the pm data for this particular tract to improve run time
-  points_subset <- data.frame(lat = rep(lat_subset, times = length(long_subset)), 
-                       lng = rep(long_subset, each = length(lat_subset)), 
-                       pm = as.vector(t(pm_subset))) %>%
-                      st_as_sf(., coords = c("lng", "lat"), 
-                        crs = st_crs(tract),
-                        agr = "constant")
-  
-  #subset points, which are inside of the tract
-  suppressMessages(points_in_tract <- points_subset[tract, , op = st_within]) 
-  
-  #if there are points inside of the tract, the tract is assigned the mean of pm of those points
-  # if there are none, the pm of the closest point
-   pm <- 0.01*ifelse(nrow(points_in_tract)>0,
-               points_in_tract$pm %>%   
-                  mean(., na.rm = TRUE),
-               tract %>%
-                 suppressWarnings(st_centroid) %>% 
-                 st_distance(x=points_subset, y=.) %>% 
-                 which.min %>%
-                 points_subset[.,] %>%
-                 pull(pm))
-  }) %>% 
-    cbind(tracts,pm= .)
-toc()
-
-##--------------plot-----------
-#save everything as interactive map via tmap
-if(TRUE){
-  tm<-tm_shape(tracts) +
-       tm_polygons("pm", alpha = 0.6) 
-  
-  filepathExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") %>% #png/html möglich
-                                file.path(exp_tracDir, .)
-  
-  tmap_save(tm, filename = filepathExpTrac_plot) 
+filepathTr <- file.path(tracDir, toString(year))
+if (!file.exists(filepathTr)){
+  dir.create(filepathTr)
 }
 
-##-----save as csv--------
-tracts <-tracts %>% 
-          as.data.frame %>%
-          suppressWarnings(within(., rm('geometry', 'LSAD', 'CENSUSAREA', 'AREA')))
+##-----------------calculation---------------
 
-write.csv(tracts,filepathExpTrac, row.names = FALSE)
+states <- file.path(tmpDir, "states.csv") %>%
+                read.csv(.)
+
+      #TODO optimze this by doing the whole process per county and not per tracts, group tibble
+      
+      tic(paste("Assigned pm exposure to each tract for year",toString(year)))
+      #estimate pm exposure for each tract
+      tracts <-tracts$geometry %>% sapply(., function(tract){
+        #get enclosing box, make sure in range of exposure data
+        bbox <- st_bbox(tract)
+        long_min <- bbox$xmin %>%
+                          max(.,long_vec[1])
+        lat_min <- bbox$ymin %>%
+                          max(.,lat_vec[1])
+        long_max <- bbox$xmax %>%
+                          min(.,long_vec[length(long_vec)]) 
+        lat_max <- bbox$ymax %>%
+                          min(.,lat_vec[length(lat_vec)])
+        
+        #estimate corresponding grid in pm exposure data
+        #TODO optimize here, if this takes too long (smaller box)
+        long_row_min <- -1+((long_min-long_vec[1])/m_max_long) %>% 
+                                                                  floor
+        lat_row_min <- -1+((lat_min-lat_vec[1])/m_max_lat) %>%
+                                                                  floor
+        long_row_max<-1+((long_max-long_vec[1])/m_min_long) %>%
+                                                                  ceiling
+        lat_row_max<-1+((lat_max-lat_vec[1])/m_min_lat) %>%
+                                                                  ceiling
+        
+        long_subset<-long_vec[long_row_min:long_row_max]
+        lat_subset <- lat_vec[lat_row_min:lat_row_max]
+        pm_subset <- exp_data[long_row_min:long_row_max,lat_row_min:lat_row_max]
+        
+        #estimates, where to look for the pm data for this particular tract to improve run time
+        points_subset <- data.frame(lat = rep(lat_subset, times = length(long_subset)), 
+                             lng = rep(long_subset, each = length(lat_subset)), 
+                             pm = as.vector(t(pm_subset))) %>%
+                            st_as_sf(., coords = c("lng", "lat"), 
+                              crs = st_crs(tract),
+                              agr = "constant")
+        
+        #subset points, which are inside of the tract
+        suppressMessages(points_in_tract <- points_subset[tract, , op = st_within]) 
+        
+        #if there are points inside of the tract, the tract is assigned the mean of pm of those points
+        # if there are none, the pm of the closest point
+         pm <- 0.01*ifelse(nrow(points_in_tract)>0,
+                     points_in_tract$pm %>%   
+                        mean(., na.rm = TRUE),
+                     tract %>%
+                       suppressWarnings(st_centroid) %>% 
+                       st_distance(x=points_subset, y=.) %>% 
+                       which.min %>%
+                       points_subset[.,] %>%
+                       pull(pm))
+        }) %>% 
+          cbind(tracts,pm= .)
+      toc()
+      
+      ##--------------plot-----------
+      #save everything as interactive map via tmap
+      if(TRUE){
+        tm<-tm_shape(tracts) +
+             tm_polygons("pm", alpha = 0.6) 
+        
+        filepathExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") %>% #png/html möglich
+                                      file.path(exp_tracDir, .)
+        
+        tmap_save(tm, filename = filepathExpTrac_plot) 
+      }
+      
+      ##-----save as csv--------
+      tracts <-tracts %>% 
+                as.data.frame %>%
+                suppressWarnings(within(., rm('geometry', 'LSAD', 'CENSUSAREA', 'AREA')))
+      
+      write.csv(tracts,filepathExpTrac, row.names = FALSE)

@@ -96,8 +96,7 @@ filepathTr <- file.path(tracDir, toString(year))
 if (!file.exists(filepathTr)){
   dir.create(filepathTr)
 }
-
-#tic()
+  
 apply(states, 1, function(x){
   STUSPS<-x[4]
   name<-x[5]
@@ -106,16 +105,12 @@ apply(states, 1, function(x){
                       paste0(.,".rds")  %>%
                       file.path(filepathTr, .)
   
-  print(filepathTrX)
-  #filepathTr <- file.path(filepathTr, "a.rds")
-  
   if (!file.exists(filepathTrX)){
     print(paste("Downloading census tracts for",year,name))
     tracts <- tracts(state = STUSPS, cb = TRUE, year=year)
     saveRDS(tracts, filepathTrX)
   }
 })
-#toc("All tracts downloaded")
 
 rm(filepathTr)
 
