@@ -9,7 +9,7 @@
 rm(list=ls(all=TRUE))
 
 # load packages, install if missing 
-packages <- c("dplyr", "RCurl","magrittr", "tigris", "censusapi")
+packages <- c("dplyr", "RCurl","magrittr", "tigris", "censusapi")#,"tictoc"
 
 options(tigris_use_cache = FALSE) 
 for(p in packages){
@@ -81,8 +81,10 @@ filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)){
   states<-states() %>%
             as.data.frame %>%
-            select(c(1:3,6,7))
-      
+            select(c(1:3,6,7)) %>%
+            filter(STATEFP <= 56) %>%
+            arrange(STATEFP) 
+            
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
   states <- read.csv(filepathStates)
@@ -90,16 +92,30 @@ if (!file.exists(filepathStates)){
 rm(filepathStates)
 
 ###------------------download tract shape files--------------------
-filepathTr <- paste("tracts_",toString(year),".rds", sep = "") %>%
-                  file.path(tracDir, .)
-
+filepathTr <- file.path(tracDir, toString(year))
 if (!file.exists(filepathTr)){
-  print(paste("Downloading tracts for",year))
-  #tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE, year=year) #TODO error for some years
-  tracts <- tracts(state = "NY", cb = TRUE, year=year) #TODO error for some years, Fallunterscheidung?
-  print(paste("Successfully downloaded tracts for",year))
-  saveRDS(tracts, filepathTr) 
+  dir.create(filepathTr)
 }
+
+#tic()
+apply(states, 1, function(x){
+  STUSPS<-x[4]
+  name<-x[5]
+  
+  filepathTrX <- paste("tracts",toString(year),STUSPS,sep="_") %>%
+                      paste0(.,".rds")  %>%
+                      file.path(filepathTr, .)
+  
+  print(filepathTrX)
+  #filepathTr <- file.path(filepathTr, "a.rds")
+  
+  if (!file.exists(filepathTrX)){
+    print(paste("Downloading census tracts for",year,name))
+    tracts <- tracts(state = STUSPS, cb = TRUE, year=year)
+    saveRDS(tracts, filepathTrX)
+  }
+})
+#toc("All tracts downloaded")
 
 rm(filepathTr)
 
