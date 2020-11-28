@@ -79,12 +79,14 @@ rm(filenameExp, filepathExp,filepathM)
 ##------download useful data to tmp-----
 filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)){
+  #excluding Alaska, Hawaii, American Samoa, Guam, Commonwealth of the Northern Mariana Islands, Puerto Rico, United States Virgin Islands
   states<-states() %>%
-            as.data.frame %>%
-            select(c(1:3,6,7)) %>%
-            filter(STATEFP <= 56) %>%
-            arrange(STATEFP) 
-            
+    as.data.frame %>%
+    select(c(1:3,6,7)) %>%
+    filter(!(STUSPS %in% c("AK",'HI','AS','GU','MP','PR','VI'))) %>%
+    arrange(STATEFP) 
+  states
+  
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
   states <- read.csv(filepathStates)

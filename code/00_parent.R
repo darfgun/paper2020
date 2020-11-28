@@ -114,7 +114,7 @@ for(year in years){
                 censDir)
   
   runscript(script=download.script, args = args)
-  #runscript(script=assignTract.script, args = args)
+  runscript(script=assignTract.script, args = args)
 }
 
 

@@ -42,13 +42,10 @@ expDir <- args[4]
 tracDir <- args[5]
 exp_tracDir <- args[6]
 
-#TODO das ist jetzt auch komplizierter
-filepathExpTrac<-paste("exp_trac",toString(year),".csv", sep = "") %>%
-                         file.path(exp_tracDir, .)
-
-#quit execution, if already calculated
-if (file.exists(filepathExpTrac)) quit() 
-
+filepathTr <- file.path(tracDir, toString(year))
+if (!file.exists(filepathTr)){
+  dir.create(filepathTr)
+}
 
 ##---------------load data---------------
 
@@ -65,26 +62,37 @@ filenameM <-paste("m_exp_",toString(year),".RData", sep = "")
 filepathM <- file.path(tmpDir, filenameM)
 load(filepathM)
 
-
-#load shape files of tracts
-#TODO das ist jetzt komplizierter
-filenameTr<-paste("tracts_",toString(year),".rds", sep = "")
-filepathTr <- file.path(tracDir, filenameTr)
-tracts<-readRDS(filepathTr)
-
-filepathTr <- file.path(tracDir, toString(year))
-if (!file.exists(filepathTr)){
-  dir.create(filepathTr)
+exp_tracDir <- file.path(exp_tracDir, toString(year))
+if (!file.exists(exp_tracDir)){
+  dir.create(exp_tracDir)
 }
 
-##-----------------calculation---------------
-
 states <- file.path(tmpDir, "states.csv") %>%
-                read.csv(.)
+  read.csv(.)
 
-      #TODO optimze this by doing the whole process per county and not per tracts, group tibble
+##-----------------calculation---------------
+tic(paste("Assigned pm exposure to each tract for year",toString(year), "for all states"))
+apply(states, 1, function(x){
+      STUSPS<-x[4]
+      name<-x[5]
       
-      tic(paste("Assigned pm exposure to each tract for year",toString(year)))
+      exp_tracDirX <- paste("exp_trac",toString(year),STUSPS,sep="_") %>%
+            paste0(.,".csv")  %>%
+            file.path(exp_tracDir, .)
+      
+      #quit execution, if already calculated
+      if (file.exists(exp_tracDirX)){
+        return()
+      }
+      
+      #load shape files
+      tracts <- paste("tracts",toString(year),STUSPS,sep="_") %>%
+                  paste0(.,".rds")  %>%
+                  file.path(tracDir, toString(year), .) %>%
+                  readRDS(.)
+            
+      #TODO optimze this by doing the whole process per county and not per tracts, group tibble
+      tic(paste("Assigned pm exposure to each tract for year",toString(year), "in", name))
       #estimate pm exposure for each tract
       tracts <-tracts$geometry %>% sapply(., function(tract){
         #get enclosing box, make sure in range of exposure data
@@ -145,7 +153,7 @@ states <- file.path(tmpDir, "states.csv") %>%
         tm<-tm_shape(tracts) +
              tm_polygons("pm", alpha = 0.6) 
         
-        filepathExpTrac_plot<-paste("exp_trac",toString(year),".html", sep = "") %>% #png/html möglich
+        filepathExpTrac_plot<-paste("exp_trac_",toString(year),"_",STUSPS,".html", sep = "") %>% #png/html möglich
                                       file.path(exp_tracDir, .)
         
         tmap_save(tm, filename = filepathExpTrac_plot) 
@@ -156,4 +164,6 @@ states <- file.path(tmpDir, "states.csv") %>%
                 as.data.frame %>%
                 suppressWarnings(within(., rm('geometry', 'LSAD', 'CENSUSAREA', 'AREA')))
       
-      write.csv(tracts,filepathExpTrac, row.names = FALSE)
+      write.csv(tracts,exp_tracDirX, row.names = FALSE)
+})
+toc()
