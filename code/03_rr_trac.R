@@ -37,7 +37,6 @@ exp_tracDir <- exp_tracDir %>% file.path(., toString(year))
 
 #create folder, where calculations will be stored
 trac_rrDir <- file.path(trac_rrDir, toString(year))
-print(trac_rrDir)
 dir.create(trac_rrDir, recursive = T, showWarnings = F)
 
 ##-----------------calculation---------------
