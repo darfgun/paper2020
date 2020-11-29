@@ -127,7 +127,7 @@ apply(states, 1, function(x){
         
         #if there are points inside of the tract, the tract is assigned the mean of pm of those points
         # if there are none, the pm of the closest point
-         pm <- 0.01*ifelse(nrow(points_in_tract)>0,
+         pm <- ifelse(nrow(points_in_tract)>0,
                      points_in_tract$pm %>%   
                         mean(., na.rm = TRUE),
                      tract %>%
@@ -135,7 +135,9 @@ apply(states, 1, function(x){
                        st_distance(x=points_subset, y=.) %>% 
                        which.min %>%
                        points_subset[.,] %>%
-                       pull(pm))
+                       pull(pm)) %>%
+                      round %>%
+                      prod(0.01)
         }) %>% 
           cbind(tracts,pm= .)
       toc()
@@ -156,7 +158,7 @@ apply(states, 1, function(x){
       ##-----save as csv--------
       tracts <-tracts %>% 
                 as.data.frame %>%
-                select(c('GEO_ID','TRACT','pm'))
+                select(c('TRACT','pm')) #'GEO_ID',
       
       write.csv(tracts,exp_tracDirX, row.names = FALSE)
 })
