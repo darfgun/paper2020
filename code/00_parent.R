@@ -16,7 +16,7 @@ if (Sys.info()["sysname"] == "Darwin") {
   runscript <-function(script, args=""){system(paste("Rscript", script, args))} 
   
 } else if (Sys.info()["sysname"] == "Windows"){
-  exec <- paste("C:/Program Files/R/R-",R.Version()$major,".",R.Version()$minor,"/bin/Rscript.exe",sep="") 
+  exec <- paste0("C:/Program Files/R/R-",R.Version()$major,".",R.Version()$minor,"/bin/Rscript.exe") 
   exec <- shQuote(exec)
   runscript <-function(script, args=""){system(paste(exec, "--vanilla", script, args))}
   
@@ -35,9 +35,7 @@ setwd(h_root)
 
 #create directory, where downloaded and calculated data is stored
 dataDir <-file.path(h_root, "data")
-if (!file.exists(dataDir)){
-  dir.create(dataDir)
-} 
+dir.create(dataDir, recursive = T, showWarnings = F)
 
 #directory contains variables used in calculations
 tmpDir <-file.path(dataDir, "tmp")
@@ -76,12 +74,20 @@ if (!file.exists(exp_tracDir)){
 } 
 
 exp_rrDir <-file.path(dataDir, "04_exp_rr")
-if (!file.exists(exp_rrDir)){
-  warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
-}
+if (!file.exists(exp_rrDir)) warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
+
 
 #directory for downloaded census data
-censDir <-file.path(dataDir, "07_census")
+trac_rrDir <-file.path(dataDir, "05_tracts_rr")
+if (!file.exists(trac_rrDir)){
+  dir.create(trac_rrDir)
+  fileConn<-file(file.path(trac_rrDir,"readme.txt"))
+  writeLines(c("This directory contains calculated year - census tract - age group - RR level tuples"), fileConn)
+  close(fileConn)
+} 
+
+#directory for downloaded census data
+censDir <-file.path(dataDir, "06_census")
 if (!file.exists(censDir)){
   dir.create(censDir)
   fileConn<-file(file.path(censDir,"readme.txt"))
@@ -117,11 +123,13 @@ for(year in years){
                 expDir,
                 tracDir,
                 exp_tracDir,
+                exp_rrDir,
+                trac_rrDir,
                 censDir)
   
-  runscript(script=download.script, args = args)
-  runscript(script=assignTract.script, args = args)
-  #runscript(script=assignRR.script, args = args)
+  #runscript(script=download.script, args = args)
+  #runscript(script=assignTract.script, args = args)
+  runscript(script=assignRR.script, args = args)
 }
 
 
