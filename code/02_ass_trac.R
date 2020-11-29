@@ -152,6 +152,7 @@ apply(states, 1, function(x){
       if(TRUE){
         tm<-tm_shape(tracts) +
              tm_polygons("pm", alpha = 0.6) 
+        #+tm_format("NLD",title=paste("Particulate Matter Exposure for",year,"in",name)) #TODO
         
         filepathExpTrac_plot<-paste("exp_trac_",toString(year),"_",STUSPS,".html", sep = "") %>% #png/html möglich
                                       file.path(exp_tracDir, .)

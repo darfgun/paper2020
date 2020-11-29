@@ -75,8 +75,13 @@ if (!file.exists(exp_tracDir)){
   close(fileConn)
 } 
 
+exp_rrDir <-file.path(dataDir, "04_exp_rr")
+if (!file.exists(exp_rrDir)){
+  warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
+}
+
 #directory for downloaded census data
-censDir <-file.path(dataDir, "04_census")
+censDir <-file.path(dataDir, "07_census")
 if (!file.exists(censDir)){
   dir.create(censDir)
   fileConn<-file(file.path(censDir,"readme.txt"))
@@ -87,6 +92,7 @@ if (!file.exists(censDir)){
 #paths of scripts
 download.script <- file.path(code.dir, '01_download.R')
 assignTract.script <- file.path(code.dir, '02_ass_trac.R')
+assignRR.script <- file.path(code.dir, '03_rr_trac.R')
 
 # load packages, install if missing
 packages <- c() 
@@ -101,7 +107,7 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2000)
+years <- c(2010)
 
 # Run code
 for(year in years){
@@ -115,6 +121,7 @@ for(year in years){
   
   runscript(script=download.script, args = args)
   runscript(script=assignTract.script, args = args)
+  #runscript(script=assignRR.script, args = args)
 }
 
 
