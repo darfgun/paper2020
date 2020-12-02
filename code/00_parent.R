@@ -113,7 +113,7 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2000)
+years <- c(2000,2010)
 
 # Run code
 for(year in years){
