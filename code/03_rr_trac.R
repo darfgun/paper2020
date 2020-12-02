@@ -9,10 +9,9 @@
 #clear memory
 rm(list=ls(all=TRUE))
 
-# load packages, install if missing 
 set.seed(0)
-
-packages <- c("magrittr","tictoc","MALDIquant")
+# load packages, install if missing
+packages <- c("magrittr","tictoc","MALDIquant","dplyr","tidyverse")
 
 options(tidyverse.quiet = TRUE)
 for(p in packages){
@@ -40,98 +39,94 @@ exp_tracDir <- exp_tracDir %>% file.path(., toString(year))
 trac_rrDir <- file.path(trac_rrDir, toString(year))
 dir.create(trac_rrDir, recursive = T, showWarnings = F)
 
-tmrelsDir <- file.path(tmpDir, "tmrels.csv")
-if(file.exists(tmrelsDir)){
-  tmrels <- read.csv(tmrelsDir)
-}else{
-  tmrels <-runif(1000, min= 2.4, max= 5.9) %>%
-                round(digits = 2)
-  write.csv(tmrels,tmrelsDir, row.names = FALSE)
-}
-#else tmrel <- mean(2.4,5.9)
-##-----------------calculation---------------
+#TODO
+#tmrelsDir <- file.path(tmpDir, "tmrels.csv")
+#if(file.exists(tmrelsDir)){
+#  tmrels <- read.csv(tmrelsDir)[[1]]
+#}else{
+#  tmrels <-runif(100, min= 2.4, max= 5.9) %>%
+#                round(digits = 2)
+#  write.csv(tmrels,tmrelsDir, row.names = FALSE)
+#}
 
+tmrel <- mean(2.4,5.9)
 
-#https://stackoverflow.com/questions/12379128/r-switch-statement-on-comparisons #TODO
-
+##---either load data or write it----
+#write useful overview over causes
 causes_agesDir <- file.path(tmpDir, "causes_ages.csv")
 
 if(file.exists(causes_agesDir)){
   causes_ages <- read.csv(causes_agesDir)
 }else{
   #Chronic obstructive pulmonary disease, ? ,lower respiratory infections, ?, type 2 diabetes
-  causes_all_ages <-c("resp_copd","lbw", "lri","neo_lung","ptb","t2_dm")
+  causes_all_ages <-c("resp_copd", "lbw", "lri","neo_lung","ptb","t2_dm")
   causes_age_specific<-c("cvd_ihd","cvd_stroke")
   
   age_ids <-  seq.int(25, 95, 5) #TODO assuming folks do not get older
   
-  causes_ages <- data.frame(label_cause = rep(causes_age_specific, each = length(age_ids)), 
-                   age_group_id = rep(age_ids, times=length(causes_age_specific))) 
+  causes_ages <- data.frame(label_cause = rep(causes_age_specific, each = length(age_ids)),
+                            age_group_id = rep(age_ids, times=length(causes_age_specific)))
   
-  causes_ages<- data.frame(label_cause = causes_all_ages, 
-                  age_group_id = rep("all ages", each=length(causes_all_ages)) )%>%
-                    rbind(causes_ages)
+  causes_ages<- data.frame(label_cause = causes_all_ages,
+                           age_group_id = rep("all ages", each=length(causes_all_ages)) )%>%
+    rbind(causes_ages)
   
   write.csv(causes_ages,causes_agesDir, row.names = FALSE)
 }
 
-state <-states[1,]
-
-STUSPS<-state[4]
-name<-state[5]
-
-trac_rrDirX <- paste0("trac_rr_",toString(year),"_",STUSPS,".csv") %>%
-                  file.path(trac_rrDir, .)
-
-getRR <- function(exp_rr, exp){
-  #exp <- pm #TODO löschen
+##-----------------calculation---------------
+tic(paste("Assigned RR to each tract for year",toString(year)))
+#loop over all states
+apply(states, 1, function(state){
+  STUSPS<-state[4]
+  name<-state[5]
   
-  rr<-match.closest(exp, exp_rr$exposure_spline) %>%
-          exp_rr[.,'mean']
-  return(rr)
-#TODO auch Konfidenzintervall
-  #which(abs(x-your.number)==min(abs(x-your.number)))
-}
-
-if(!file.exists(trac_rrDirX)){
-  tic(paste("Assigned RR to each tract for year",toString(year), "in", name))
+  #path, where result should be stored
+  trac_rrDirX <- paste0("trac_rr_",toString(year),"_",STUSPS,".csv") %>%
+    file.path(trac_rrDir, .)
+  
+  #quit execution, if already calculated
+  if (file.exists(trac_rrDirX)){
+    return()
+  }
   
   exp_trac <- paste0("exp_trac_",toString(year),"_",STUSPS,".csv") %>%
     file.path(exp_tracDir, .) %>%
     read.csv
   
-  
-  trac_rr<-merge(exp_trac,causes_ages)
-  
-  
-  
-  #TODO mutate
-  #TODO change order of loops, so it is more efficient
-  rrs<-apply(trac_rr,1,function(row){
-    #row<-trac_rr[1,] #TODO löschen
-    pm<-row[2]
-    label_cause <- row[3]
-    age_group_id <- row[4]
-    
-    exp_rr <- ifelse(age_group_id == "all ages",
-                     paste0(label_cause,".csv"),
-                     paste0(label_cause,"_",age_group_id,".csv")) %>%
+  trac_rr<-apply(causes_ages,1, function(cause_age)
+  { 
+      label_cause <- cause_age[1]
+      age_group_id <- cause_age[2]
+      
+      exp_rr <- ifelse(age_group_id == "all ages",
+                       paste0(label_cause,".csv"),
+                       paste0(label_cause,"_",age_group_id,".csv")) %>%
                     file.path(exp_rrDir,.) %>%
                     read.csv
-    #
-    rr<-sapply(tmrels, function(tmrel){
-      rr<-ifelse(pm<=tmrel,
-                 1,
-                 getRR(exp_rr,pm)/getRR(exp_rr,tmrel))
+      #%>% subset('exposure_spline','mean') #TODO
       
-    }) %>% mean        #TODO mean oder median
+      getMRBRT <- function(pm) match.closest(pm, exp_rr$exposure_spline) %>% exp_rr[.,'mean'] %>% return(.)
+      
+      tmrelMRBR <- getMRBRT(tmrel)
+      
+      #get cause and age specific relative risk for pm exposure
+      getRR <-function(pm){
+        ifelse(pm<=tmrel,
+               1,
+               getMRBRT(pm)/tmrelMRBR) %>%
+          return(.)}
     
-    return(rr)
-  })
- 
-  
-  trac_rr <- cbind(trac_rr,rrs) #TODO pipe
-  toc()
-  write.csv(trac_rr,trac_rrDirX, row.names = FALSE)
-}
+      trac_rrX<-exp_trac %>%
+        mutate(label_cause = label_cause,
+               age_group_id = age_group_id,
+               rr = getRR(pm))
 
+      return(trac_rrX)
+      }) %>% do.call(rbind,.) %>% as.data.frame #TODO
+  
+  ##-----save as csv--------
+  write.csv(trac_rr,trac_rrDirX, row.names = FALSE)
+})
+
+toc()
