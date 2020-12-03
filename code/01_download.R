@@ -36,7 +36,7 @@ year <- args[1]
 tmpDir <- args[3]
 expDir <- args[4]
 tracDir <- args[5]
-censDir <- args[7]
+censDir <- args[9]
 
 
 #----------------------download exposure data-----------------
@@ -105,6 +105,8 @@ apply(states, 1, function(x){
   
   if (!file.exists(filepathTrX)){
     print(paste("Downloading census tracts for",year,name))
+    #TODO fallunterscheidung
+    
     tracts <- tracts(state = STUSPS, cb = TRUE, year=year)
     saveRDS(tracts, filepathTrX)
   }
@@ -143,24 +145,43 @@ if (!file.exists(filepathCens)){
     #TODO 
   }else if(year == 2010){
     #https://api.census.gov/data/2010/dec/sf1/variables.html
+    #https://www.census.gov/data/tables/2010/demo/age-and-sex/2010-age-sex-composition.html
+    year <-2010 #TODO delete
+    
+    group <- sapply(1:7, function(x) paste0("P",toString(.)))
     
     census_vars <- listCensusMetadata(
       name = "dec/sf1", 
       vintage = 2010,
-      type = "variables",
-      group = "P5") %>%
+      type = "variables" ,
+      group = "PCT13A"
+      ) %>%
       head
+    #P5:P9, P12 SEX BY AGE
+
     
-    write.table(census_vars, file = filepathReadMe, sep = "\t",
-                row.names = TRUE, col.names = NA)#TODO append=true, formatting
+    #write.table(census_vars, file = filepathReadMe, sep = "\t",row.names = TRUE, col.names = NA)#TODO append=true, formatting
     
-    data_from_api <- getCensus(name = "dec/sf1", vintage = year,
-                              vars = "group(P2)",
+    data_from_api <- getCensus(name = "dec/sf1", 
+                               vintage = year,
+                              vars  = "P34I",
                              region = "tract:*", 
     regionin = "state:17") #TODO testzwecke
+    
   }else if(year %in% 2011:2013){
     #TODO
   }else if(year %in% 2014:2016){
+    #https://www.census.gov/data/developers/data-sets/ACS-supplemental-data.html
+    #https://data.census.gov/cedsci/table?g=0400000US01_1600000US0100820&d=ACS%20Supplemental%20Estimates%20Detailed%20Tables&tid=ACSSE2019.K200104&hidePreview=true
+    #https://data.census.gov/cedsci/table?g=0400000US01_1600000US0100820&d=ACS%20Supplemental%20Estimates%20Detailed%20Tables&tid=ACSSE2019.K200101&hidePreview=true
+    #https://data.census.gov/cedsci/table?g=0400000US01_1600000US0100820&d=ACS%20Supplemental%20Estimates%20Detailed%20Tables&tid=ACSSE2019.K200201&hidePreview=true
+    
+    data_from_api <- getCensus(name = "acs/acsse", 
+                               vintage = year, #TODO year
+                               vars = "K200104",
+                               region = "county subdivision", #TODO https://api.census.gov/data/2019/acs/acsse/examples.html
+                               regionin = "state:17")
+    
     #name = acs/acsse
   }else{
     print(paste("No census data for",year,"available"))

@@ -39,6 +39,7 @@ exp_tracDir <- exp_tracDir %>% file.path(., toString(year))
 trac_rrDir <- file.path(trac_rrDir, toString(year))
 dir.create(trac_rrDir, recursive = T, showWarnings = F)
 
+causes_ages <- file.path(tmpDir, "causes_ages.csv") %>% read.csv
 ##-----------------calculation---------------
 tic(paste("Assigned RR to each tract for year",toString(year)))
 #loop over all states

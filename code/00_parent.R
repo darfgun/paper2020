@@ -118,20 +118,20 @@ years <- c(2000,2010)
 
 # Run code
 for(year in years){
-  args <- paste(year,
-                dataDir,
-                tmpDir,
-                expDir,
-                tracDir,
-                exp_tracDir,
-                exp_rrDir,
-                trac_rrDir,
-                censDir)
+  args <- paste(year, #1
+                dataDir,#2
+                tmpDir,#3
+                expDir,#4
+                tracDir,#5
+                exp_tracDir,#6
+                exp_rrDir,#7
+                trac_rrDir,#8
+                censDir)#9
   
   #runscript(script=download.script, args = args)
   #runscript(script=assignTract.script, args = args)
-  runscript(script=mrbrtRR.script, args = args)
-  #runscript(script=assignRR.script, args = args)
+  #runscript(script=mrbrtRR.script, args = args)
+  runscript(script=assignRR.script, args = args)
 }
 
 
