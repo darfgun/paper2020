@@ -39,41 +39,6 @@ exp_tracDir <- exp_tracDir %>% file.path(., toString(year))
 trac_rrDir <- file.path(trac_rrDir, toString(year))
 dir.create(trac_rrDir, recursive = T, showWarnings = F)
 
-#TODO
-#tmrelsDir <- file.path(tmpDir, "tmrels.csv")
-#if(file.exists(tmrelsDir)){
-#  tmrels <- read.csv(tmrelsDir)[[1]]
-#}else{
-#  tmrels <-runif(100, min= 2.4, max= 5.9) %>%
-#                round(digits = 2)
-#  write.csv(tmrels,tmrelsDir, row.names = FALSE)
-#}
-
-tmrel <- mean(2.4,5.9)
-
-##---either load data or write it----
-#write useful overview over causes
-causes_agesDir <- file.path(tmpDir, "causes_ages.csv")
-
-if(file.exists(causes_agesDir)){
-  causes_ages <- read.csv(causes_agesDir)
-}else{
-  #Chronic obstructive pulmonary disease, ? ,lower respiratory infections, ?, type 2 diabetes
-  causes_all_ages <-c("resp_copd", "lbw", "lri","neo_lung","ptb","t2_dm")
-  causes_age_specific<-c("cvd_ihd","cvd_stroke")
-  
-  age_ids <-  seq.int(25, 95, 5) #TODO assuming folks do not get older
-  
-  causes_ages <- data.frame(label_cause = rep(causes_age_specific, each = length(age_ids)),
-                            age_group_id = rep(age_ids, times=length(causes_age_specific)))
-  
-  causes_ages<- data.frame(label_cause = causes_all_ages,
-                           age_group_id = rep("all ages", each=length(causes_all_ages)) )%>%
-    rbind(causes_ages)
-  
-  write.csv(causes_ages,causes_agesDir, row.names = FALSE)
-}
-
 ##-----------------calculation---------------
 tic(paste("Assigned RR to each tract for year",toString(year)))
 #loop over all states
@@ -104,18 +69,8 @@ apply(states, 1, function(state){
                        paste0(label_cause,"_",age_group_id,".csv")) %>%
                     file.path(exp_rrDir,.) %>%
                     read.csv
-      #%>% subset('exposure_spline','mean') #TODO
       
-      getMRBRT <- function(pm) match.closest(pm, exp_rr$exposure_spline) %>% exp_rr[.,'mean'] %>% return(.)
-      
-      tmrelMRBR <- getMRBRT(tmrel)
-      
-      #get cause and age specific relative risk for pm exposure
-      getRR <-function(pm){
-        ifelse(pm<=tmrel,
-               1,
-               getMRBRT(pm)/tmrelMRBR) %>%
-          return(.)}
+      getRR <- function(pm) match.closest(pm, exp_rr$exposure_spline) %>% exp_rr[.,'rr'] %>% return(.)
     
       trac_rrX<-exp_trac %>%
         mutate(label_cause = label_cause,
