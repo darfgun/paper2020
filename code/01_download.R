@@ -148,13 +148,12 @@ if (!file.exists(filepathCens)){
     #https://www.census.gov/data/tables/2010/demo/age-and-sex/2010-age-sex-composition.html
     year <-2010 #TODO delete
     
-    group <- sapply(1:7, function(x) paste0("P",toString(.)))
-    
     census_vars <- listCensusMetadata(
       name = "dec/sf1", 
       vintage = 2010,
       type = "variables" ,
-      group = "PCT13A"
+      #variable = "PCT013A001"
+      group = "PCT13G"
       ) %>%
       head
     #P5:P9, P12 SEX BY AGE
@@ -164,7 +163,7 @@ if (!file.exists(filepathCens)){
     
     data_from_api <- getCensus(name = "dec/sf1", 
                                vintage = year,
-                              vars  = "P34I",
+                              vars  = "group(PCT13A)",
                              region = "tract:*", 
     regionin = "state:17") #TODO testzwecke
     

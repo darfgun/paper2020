@@ -158,7 +158,7 @@ apply(states, 1, function(x){
   ##-----save as csv--------
   tracts <-tracts %>%
     as.data.frame %>%
-    select(c('COUNTYFP','TRACT','pm')) #TODO county
+    select(c('COUNTYFP','TRACT','pm')) #TODO GEO_ID
   
   write.csv(tracts,exp_tracDirX, row.names = FALSE)
 })
