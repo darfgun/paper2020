@@ -87,7 +87,7 @@ apply(states, 1, function(x){
   #TODO optimze this by doing the whole process per county and not per tracts, group tibble
   tic(paste("Assigned pm exposure to each tract for year",toString(year), "in", name))
   #estimate pm exposure for each tract
-  tracts <-tracts$geometry %>% sapply(., function(tract){
+  tracts$pm <- sapply(tracts$geometry, function(tract){
     #get enclosing box, make sure in range of exposure data
     bbox <- st_bbox(tract)
     long_min <- bbox$xmin %>%
@@ -138,8 +138,7 @@ apply(states, 1, function(x){
                    pull(pm)) %>%
       round %>%
       prod(0.01)
-  }) %>%
-    cbind(tracts,pm= .)
+  }) 
   toc()
   
   ##--------------plot-----------

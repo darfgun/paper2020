@@ -152,8 +152,8 @@ if (!file.exists(filepathCens)){
       name = "dec/sf1", 
       vintage = 2010,
       type = "variables" ,
-      #variable = "PCT013A001"
-      group = "PCT13G"
+      #variable = "PCT012A001"
+      group = "PCT12A"
       ) %>%
       head
     #P5:P9, P12 SEX BY AGE
@@ -163,7 +163,7 @@ if (!file.exists(filepathCens)){
     
     data_from_api <- getCensus(name = "dec/sf1", 
                                vintage = year,
-                              vars  = "group(PCT13A)",
+                              vars  = "PCT012A209",
                              region = "tract:*", 
     regionin = "state:17") #TODO testzwecke
     
