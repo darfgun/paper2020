@@ -9,7 +9,7 @@
 rm(list=ls(all=TRUE))
 
 # load packages, install if missing 
-packages <- c("dplyr", "RCurl","magrittr", "tigris", "censusapi")#,"tictoc"
+packages <- c("dplyr", "RCurl","magrittr", "tigris", "censusapi","stringr","data.table","tidyverse")#,"tictoc"
 
 options(tigris_use_cache = FALSE) 
 for(p in packages){
@@ -115,13 +115,88 @@ apply(states, 1, function(x){
 rm(filepathTr)
 
 ###------------------download census data files--------------------
-
-filepathCens<- paste0("census_",toString(year),".csv") %>% #TODO data frame as csv
-                        file.path(censDir, .) 
-
 # Add key to .Renviron
 key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" #TODO
 Sys.setenv(CENSUS_KEY=key)
+
+
+##----- download metadata------
+filepathCensMeta <- file.path(censDir, "dec_cens_meta.csv")
+
+if ( !file.exists(filepathCensMeta)){ 
+        groups <- c("PCT12A","PCT12B","PCT12C","PCT12D","PCT12D","PCT12E","PCT12I","PCT12J","PCT12K","PCT12L","PCT12M")
+        census_meta<-lapply(groups, function(group){
+            listCensusMetadata(
+              name = "dec/sf1", 
+              vintage = 2010,
+              type = "variables",
+              group = group #TODO more
+            ) %>% 
+              select('name','label','concept') %>%
+              mutate(
+                label = strsplit(label, "!!"),
+                label_len = sapply(label, length),
+                gender = label %>% sapply(function(l) l[2]),
+                gender_label = gender %>% sapply(function(g) ifelse(g == "Female", 'F', 'M')),
+                age = label %>% sapply(function(l) l[3]),
+                min_age = age %>% sapply(function(a){ 
+                  if(grepl("Under 1 year", a))
+                    return(0)                 
+                  str_extract(a, "[:digit:]+") %>% 
+                    as.numeric %>% #TODO
+                    return(.)
+                  }),
+                max_age = age %>% sapply(function(a){ #TODO
+                  if(grepl("and over", a))
+                    return(150)
+                  if(grepl("Under 1 year", a))
+                    return(0)
+                  str_extract_all(a, "[:digit:]+") %>% 
+                    unlist %>% 
+                    tail(1) %>% 
+                    as.numeric %>% #TODO
+                    return(.)
+                }),
+                #age = NULL, #TODO
+                label = NULL,
+                race_his = concept %>% sapply(function(conc)
+                  regmatches(conc, gregexpr("(?<=\\().*?(?=\\))", conc, perl=T))[[1]]
+                ),
+                concept = NULL,
+                race =race_his %>% sapply(function(race_his){
+                  race_his %>% 
+                    strsplit(.,",") %>% 
+                    unlist %>% 
+                    extract2(1)%>% 
+                    substr(.,1,nchar(.)-6)
+                }),
+                hispanic_origin =race_his %>% sapply(function(race_his){
+                  a<- race_his %>% 
+                        strsplit(.,",") %>% 
+                        unlist
+                  ifelse(length(a) == 1, 
+                           "all", 
+                           a[2])
+                }),
+                race_his = NULL
+                ) 
+      })  %>%
+          do.call(rbind,.) %>% 
+          as.data.frame%>%
+          filter(label_len==3) %>%
+          mutate(label_len = NULL)
+  
+      setnames(census_meta, "name", "variable")
+      
+      write.csv(census_meta,filepathCensMeta, row.names = FALSE) 
+}else{
+  census_meta <- read.csv(filepathCensMeta)
+}
+##--- download sex by age for each race---
+filepathCens<- paste0("census_",toString(year),".csv") %>% #TODO data frame as csv
+                        file.path(censDir, .) 
+
+
 
 #https://cran.r-project.org/web/packages/censusapi/vignettes/getting-started.html
 #https://www.census.gov/data/developers/data-sets.html
