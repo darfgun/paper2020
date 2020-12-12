@@ -96,6 +96,7 @@ if (!file.exists(censDir)){
 } 
 
 #paths of scripts
+download.cens.script <- file.path(code.dir, '01_download_cens.R')
 download.script <- file.path(code.dir, '01_download.R')
 assignTract.script <- file.path(code.dir, '02_ass_trac.R')
 mrbrtRR.script <- file.path(code.dir, '03_mrbrt_rr.R')
@@ -117,6 +118,9 @@ for(p in packages){
 years <- c(2000)
 
 # Run code
+for(year in years)
+  runscript(script=download.cens.script, args = paste(censDir,tmpDir, year))
+
 for(year in years){
   args <- paste(year, #1
                 dataDir,#2
@@ -128,7 +132,7 @@ for(year in years){
                 trac_rrDir,#8
                 censDir)#9
   
-  runscript(script=download.script, args = args)
+  #runscript(script=download.script, args = args)
   #runscript(script=assignTract.script, args = args)
   #runscript(script=mrbrtRR.script, args = args)
   #runscript(script=assignRR.script, args = args)
