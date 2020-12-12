@@ -16,7 +16,6 @@ for(p in packages){
   if(p %in% rownames(installed.packages())==FALSE){
     install.packages(p)
   }
-  
   suppressMessages(library(p, character.only = T, warn.conflicts=FALSE))
 }
 
@@ -36,7 +35,7 @@ if (!file.exists(filepathStates)){
     select(c(1:3,6,7)) %>%
     filter(!(STUSPS %in% c("AK",'HI','AS','GU','MP','PR','VI'))) %>%
     arrange(STATEFP) 
-  states
+  
   
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
@@ -56,16 +55,22 @@ dir.create(censMetaDir, recursive = T, showWarnings = F)
 
 filepathCensMeta <- paste0("cens_meta_",toString(year),".csv") %>%
                         file.path(censMetaDir, .)
-if(year == 2010)
+if(year == 2010){
   groups <- c("PCT12A","PCT12B","PCT12C","PCT12D","PCT12D","PCT12E","PCT12I","PCT12J","PCT12K","PCT12L","PCT12M")
-if(year == 2000)
-  groups <- c("P012A") #TODO
+  tablename <- "dec/sf1"
+}else if(year == 2000){
+  groups <- c("P012A","P012B","P012C","P012D","PCT012J","PCT012K","PCT012L","PCT012M") 
+  tablename <- "dec/sf1"
+}else if(year %in% 2011:2016){
+  groups <- c("B01001A","B01001B","B01001C","B01001D","B01001E","B01001H" )
+  tablename <- "acs/acs5"
+}
 
 if ( !file.exists(filepathCensMeta)){ 
   tic(paste("Downloaded census meta data for year", toString(year)))
   census_meta<-lapply(groups, function(group){
     listCensusMetadata(
-      name = "dec/sf1", 
+      name = tablename,  
       vintage = year,
       type = "variables",
       group = group 
@@ -75,6 +80,23 @@ if ( !file.exists(filepathCensMeta)){
         year = year,
         group = group,
         label = strsplit(label, "!!"),
+        
+        #datatype = sapply(label, function(l){
+        #  if(l[[1]] %in% c("Estimate","Annotation of Estimate","Margin of Error","Annotation of Margin of Error")){
+        #    return(l[[1]])
+        #  }else{
+        #    return("Estimate")
+        #  }
+        #}),
+        
+        #label = lapply(label, function(l){
+        #  if(l[[1]] %in% c("Estimate","	Annotation of Estimate","Margin of Error","Annotation of Margin of Error")){
+        #    return(l[-1])
+        #  }else{
+        #    return(l)
+        #  }
+        #}),
+
         label_len = sapply(label, length),
         gender = label %>% sapply(function(l) l[2]),
         gender_label = gender %>% sapply(function(g) ifelse(g == "Female", 'F', 'M')),
@@ -92,11 +114,14 @@ if ( !file.exists(filepathCensMeta)){
                   unlist %>% 
                   tail(1) %>% 
                   as.numeric 
-          if(grepl("Under", a)) 
-            (a-1)
+          if(grepl("Under", a)){
+            return(res-1)
+          }else{
+            return(res)
+          } 
         }),
         age = NULL,
-        #label = NULL, #TODO entkommentieren
+        label = NULL, 
         race_his = concept %>% sapply(function(conc)
           regmatches(conc, gregexpr("(?<=\\().*?(?=\\))", conc, perl=T))[[1]]
         ),
@@ -112,7 +137,7 @@ if ( !file.exists(filepathCensMeta)){
           a<- race_his %>% 
             strsplit(.,",") %>% 
             unlist
-          ifelse(length(a) == 1, 
+          ifelse(length(a) <= 1, #TODO
                  "all", 
                  a[2])
         }),
@@ -121,17 +146,21 @@ if ( !file.exists(filepathCensMeta)){
   })  %>%
     do.call(rbind,.) %>% 
     as.data.frame%>%
-    filter(label_len==3) %>%
+    filter(label_len==3) %>% #TODO datatype == "Estimate"
     mutate(label_len = NULL)
   
   setnames(census_meta, "name", "variable")
+  
+  census_meta <- apply(census_meta,2,as.character)
   
   write.csv(census_meta,filepathCensMeta, row.names = FALSE) 
   toc()
 }else{
   census_meta <- read.csv(filepathCensMeta)
 }
-relevant_variables <- unique(census_meta$variable)
+
+census_meta <- census_meta %>% as.data.frame
+relevant_variables <- census_meta$variable %>% unique
 
 ##--- download sex by age for each race---
 censDir <- file.path(censDir, year)
@@ -151,7 +180,7 @@ apply(states, 1, function(state){
     if(year %in% c(2000,2010)){
       data_from_api<-lapply(groups, function(group){
         tic(paste("Downloaded census data in year",toString(year), "in", name, "for group", group))
-        data<-getCensus(name = "dec/sf1", 
+        data<-getCensus(name = tablename, 
                   vintage = year,
                   vars = paste0("group(",group,")"),
                   region = "tract:*", 
