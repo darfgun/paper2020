@@ -115,11 +115,13 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2000,2010)
+years <- c(2011)
 
 # Run code
 for(year in years)
   runscript(script=download.cens.script, args = paste(censDir,tmpDir, year))
+
+#TODO interpolation
 
 for(year in years){
   args <- paste(year, #1

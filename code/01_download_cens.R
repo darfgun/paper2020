@@ -79,23 +79,23 @@ if ( !file.exists(filepathCensMeta)){
       mutate(
         year = year,
         group = group,
+        name = sapply(name, as.character), #TODO
         label = strsplit(label, "!!"),
         
-        #datatype = sapply(label, function(l){
-        #  if(l[[1]] %in% c("Estimate","Annotation of Estimate","Margin of Error","Annotation of Margin of Error")){
-        #    return(l[[1]])
-        #  }else{
-        #    return("Estimate")
-        #  }
-        #}),
+        #filter columns not ending with MA EA
+        datatype = sapply(label, function(l){
+          ifelse(tablename == "acs/acs5",
+                 l[[1]],
+                 "Estimate")
+        }),
         
-        #label = lapply(label, function(l){
-        #  if(l[[1]] %in% c("Estimate","	Annotation of Estimate","Margin of Error","Annotation of Margin of Error")){
-        #    return(l[-1])
-        #  }else{
-        #    return(l)
-        #  }
-        #}),
+        label = lapply(label, function(l){
+          if(tablename == "acs/acs5"){
+            return(l[-1])
+          }else{
+            return(l)
+          }
+        }),
 
         label_len = sapply(label, length),
         gender = label %>% sapply(function(l) l[2]),
@@ -146,20 +146,20 @@ if ( !file.exists(filepathCensMeta)){
   })  %>%
     do.call(rbind,.) %>% 
     as.data.frame%>%
-    filter(label_len==3) %>% #TODO datatype == "Estimate"
-    mutate(label_len = NULL)
+    filter(label_len==3,
+           datatype == "Estimate") %>% 
+    mutate(label_len = NULL,
+           datatype = NULL) %>%
+    arrange(min_age)
   
   setnames(census_meta, "name", "variable")
   
-  census_meta <- apply(census_meta,2,as.character)
-  
-  write.csv(census_meta,filepathCensMeta, row.names = FALSE) 
+  fwrite(census_meta,filepathCensMeta)
   toc()
 }else{
   census_meta <- read.csv(filepathCensMeta)
 }
 
-census_meta <- census_meta %>% as.data.frame
 relevant_variables <- census_meta$variable %>% unique
 
 ##--- download sex by age for each race---
@@ -177,7 +177,7 @@ apply(states, 1, function(state){
   
   if (!file.exists(filepathCens)){
     tic(paste("Downloaded census data in year",toString(year), "in", name))
-    if(year %in% c(2000,2010)){
+    #if(year %in% c(2000,2010)){
       data_from_api<-lapply(groups, function(group){
         tic(paste("Downloaded census data in year",toString(year), "in", name, "for group", group))
         data<-getCensus(name = tablename, 
@@ -185,7 +185,7 @@ apply(states, 1, function(state){
                   vars = paste0("group(",group,")"),
                   region = "tract:*", 
                   regionin = sprintf("state:%02d", STATEFP)) %>% 
-          select(!NAME) %>%  #TODO
+          select(any_of(c(relevant_variables, "state", "county", "tract", "GEO_ID"))) %>% 
           pivot_longer(
             cols=!c('state','county','tract','GEO_ID'), 
             names_to = "variable", 
@@ -194,15 +194,8 @@ apply(states, 1, function(state){
         return(data)
             }) %>%
           do.call(rbind,.) %>% 
-          as.data.frame %>%
-          filter(variable %in% relevant_variables) #TODO filter,relevant_variables
+          as.data.frame 
       
-      #%>% merge(., census_vars, by ="variable")
-      #https://dplyr.tidyverse.org/reference/join.html TODO join, merge oder was?
-      
-    }else if(year %in% 2011:2016){
-      
-    }
     
     write.csv(data_from_api,filepathCens, row.names = FALSE) 
     toc()
