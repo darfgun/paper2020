@@ -121,6 +121,7 @@ years <- c(2011)
 for(year in years)
   runscript(script=download.cens.script, args = paste(censDir,tmpDir, year))
 
+#TODO Hispanic or Latino via complement Menge
 #TODO interpolation
 
 for(year in years){
@@ -139,7 +140,3 @@ for(year in years){
   #runscript(script=mrbrtRR.script, args = args)
   #runscript(script=assignRR.script, args = args)
 }
-
-
-
-

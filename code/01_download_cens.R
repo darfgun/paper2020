@@ -26,7 +26,14 @@ censDir <- args[1]
 tmpDir <- args[2]
 year <- args[3]
 
+#quits, if not downloadable year
+if(!year %in% c(2000,2011:2016)){
+  print(paste("can not download census data for", year))
+  quit()
+}
+
 ##------download useful data to tmp-----
+#download states data
 filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)){
   #excluding Alaska, Hawaii, American Samoa, Guam, Commonwealth of the Northern Mariana Islands, Puerto Rico, United States Virgin Islands
@@ -35,7 +42,6 @@ if (!file.exists(filepathStates)){
     select(c(1:3,6,7)) %>%
     filter(!(STUSPS %in% c("AK",'HI','AS','GU','MP','PR','VI'))) %>%
     arrange(STATEFP) 
-  
   
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
@@ -49,25 +55,32 @@ key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" #TODO
 Sys.setenv(CENSUS_KEY=key)
 
 
-##----- download metadata------
+##----- download census metadata------
 censMetaDir <- file.path(censDir,"meta" )
 dir.create(censMetaDir, recursive = T, showWarnings = F)
 
 filepathCensMeta <- paste0("cens_meta_",toString(year),".csv") %>%
                         file.path(censMetaDir, .)
-if(year == 2010){
-  groups <- c("PCT12A","PCT12B","PCT12C","PCT12D","PCT12D","PCT12E","PCT12I","PCT12J","PCT12K","PCT12L","PCT12M")
-  tablename <- "dec/sf1"
-}else if(year == 2000){
+
+#relevant groups for each year and tablename 
+if(year == 2000){
+  #decennical census, sex by age for races
   groups <- c("P012A","P012B","P012C","P012D","PCT012J","PCT012K","PCT012L","PCT012M") 
   tablename <- "dec/sf1"
+}else if(year == 2010){
+  #decennical census, sex by age for races
+  groups <- c("PCT12A","PCT12B","PCT12C","PCT12D","PCT12D","PCT12E","PCT12I","PCT12J","PCT12K","PCT12L","PCT12M")
+  tablename <- "dec/sf1"
 }else if(year %in% 2011:2016){
+  #american community survey
   groups <- c("B01001A","B01001B","B01001C","B01001D","B01001E","B01001H" )
   tablename <- "acs/acs5"
 }
 
-if ( !file.exists(filepathCensMeta)){ 
+#download meta data, if necessary
+if (!file.exists(filepathCensMeta)){ 
   tic(paste("Downloaded census meta data for year", toString(year)))
+  #loop over all relevant groups
   census_meta<-lapply(groups, function(group){
     listCensusMetadata(
       name = tablename,  
@@ -75,54 +88,61 @@ if ( !file.exists(filepathCensMeta)){
       type = "variables",
       group = group 
     ) %>% 
-      select('name','label','concept') %>%
+      select('name','label','concept') %>% #select relevant columns
       mutate(
         year = year,
         group = group,
-        name = sapply(name, as.character), #TODO
         label = strsplit(label, "!!"),
         
-        #filter columns not ending with MA EA
         datatype = sapply(label, function(l){
+          #the acs includes estimates and annotation of estimates
           ifelse(tablename == "acs/acs5",
                  l[[1]],
                  "Estimate")
         }),
         
         label = lapply(label, function(l){
+          #making acs label notation coherant with dec cens notation
           if(tablename == "acs/acs5"){
             return(l[-1])
           }else{
             return(l)
           }
         }),
-
+        
         label_len = sapply(label, length),
         gender = label %>% sapply(function(l) l[2]),
         gender_label = gender %>% sapply(function(g) ifelse(g == "Female", 'F', 'M')),
         age = label %>% sapply(function(l) l[3]),
         min_age = age %>% sapply(function(a){ 
+          # age includes "under", min_age = 0
           if(grepl("Under", a))
-            return(0)                 
+            return(0)   
+          #else extract first number in String
           str_extract(a, "[:digit:]+") %>% 
             as.numeric
         }),
         max_age = age %>% sapply(function(a){ 
+          #if includes "and over", max_age = 150, since humans do not older
           if(grepl("and over", a))
             return(150)
-          res<-str_extract_all(a, "[:digit:]+") %>% 
+          #otherwise fetch last number in String
+          last_num<-str_extract_all(a, "[:digit:]+") %>% 
                   unlist %>% 
                   tail(1) %>% 
                   as.numeric 
+          #if includes "under", max_age = last_num -1
           if(grepl("Under", a)){
-            return(res-1)
-          }else{
-            return(res)
+            return(last_num-1)
+          }else{ # else just last_num
+            return(last_num)
           } 
         }),
         age = NULL,
         label = NULL, 
         race_his = concept %>% sapply(function(conc)
+          #fetch the information in the brackets
+          #e.g. sex by age (White alone, not hispanic or latino) => White alone, not hispanic or latino
           regmatches(conc, gregexpr("(?<=\\().*?(?=\\))", conc, perl=T))[[1]]
         ),
         concept = NULL,
@@ -131,29 +151,79 @@ if ( !file.exists(filepathCensMeta)){
             strsplit(.,",") %>% 
             unlist %>% 
             extract2(1)%>% 
+            #fetch what comes before ","; e.g.: White alone, not hispanic or latino => White alone
             substr(.,1,nchar(.)-6)
+            #removes " alone", e.g. "White alone" => "White"
         }),
+        #greps hispanic origin. option: not Hispanic or latino, Hispanic or latino, all
         hispanic_origin =race_his %>% sapply(function(race_his){
           a<- race_his %>% 
             strsplit(.,",") %>% 
             unlist
-          ifelse(length(a) <= 1, #TODO
+          ifelse(length(a) <= 1, 
                  "all", 
                  a[2])
+          #fetch what comes after ","; e.g.: White alone, not hispanic or latino => not hispanic or latino
         }),
         race_his = NULL
       ) 
   })  %>%
     do.call(rbind,.) %>% 
     as.data.frame%>%
-    filter(label_len==3,
-           datatype == "Estimate") %>% 
+    filter(label_len==3, #filters granular data with gender and age group
+           datatype == "Estimate") %>% #filters Estimates, excluding Annotations and Margins of Error
     mutate(label_len = NULL,
-           datatype = NULL) %>%
-    arrange(min_age)
+           datatype = NULL) 
+  #%>% arrange(min_age) #TODO
   
-  setnames(census_meta, "name", "variable")
+  setnames(census_meta, "name", "variable") #rename for later purpose
   
+  #drop unrequired information
+  fwrite(census_meta,filepathCensMeta)
+  census_meta <- read.csv(filepathCensMeta)
+  
+  #add some useful columns
+  census_meta<- census_meta%>%
+    mutate(
+      downloaded= TRUE, 
+      tot_var = NA,
+      ntot_var = NA
+    )
+  
+  census_meta_pairs <- census_meta %>%
+    group_by(year, gender, gender_label, min_age, max_age, race)%>% 
+    summarise(number= n(),
+              tot_var = first(variable),
+              tot_his = first(hispanic_origin),
+              ntot_var = last(variable),
+              ntot_his = last(hispanic_origin)
+    ) %>%
+    filter(number == 2,
+           !("HISPANIC OR LATINO" %in% c(tot_his,ntot_his))
+    ) %>% 
+    mutate(#swap variables if necessary
+      tot_var = ifelse(tot_his == "all", tot_var, ntot_var),
+      ntot_var = ifelse(ntot_var == "HISPANIC OR LATINO", tot_var, ntot_var)
+    )
+  
+  census_meta <- rbind(
+                     census_meta,
+                     data.frame(
+                       variable=census_meta_pairs$tot_var %>% paste0(., "C"),
+                       year = census_meta_pairs$year,
+                       group = NA,
+                       gender = census_meta_pairs$gender,
+                       gender_label = census_meta_pairs$gender_label,
+                       min_age = census_meta_pairs$min_age,
+                       max_age = census_meta_pairs$max_age,
+                       race = census_meta_pairs$race, #TODO
+                       hispanic_origin = rep("HISPANIC OR LATINO", nrow(census_meta_pairs)),
+                       downloaded = FALSE,
+                       tot_var = census_meta_pairs$tot_var,
+                       ntot_var = census_meta_pairs$ntot_var
+                     )
+                )
+    
   fwrite(census_meta,filepathCensMeta)
   toc()
 }else{
@@ -177,33 +247,50 @@ apply(states, 1, function(state){
   
   if (!file.exists(filepathCens)){
     tic(paste("Downloaded census data in year",toString(year), "in", name))
-    #if(year %in% c(2000,2010)){
-      data_from_api<-lapply(groups, function(group){
-        tic(paste("Downloaded census data in year",toString(year), "in", name, "for group", group))
-        data<-getCensus(name = tablename, 
-                  vintage = year,
-                  vars = paste0("group(",group,")"),
-                  region = "tract:*", 
-                  regionin = sprintf("state:%02d", STATEFP)) %>% 
-          select(any_of(c(relevant_variables, "state", "county", "tract", "GEO_ID"))) %>% 
-          pivot_longer(
-            cols=!c('state','county','tract','GEO_ID'), 
-            names_to = "variable", 
-            values_to = "value")
-        toc()
-        return(data)
-            }) %>%
-          do.call(rbind,.) %>% 
-          as.data.frame 
-      
+    data_from_api<-lapply(groups, function(group){
+            tic(paste("Downloaded census data in year",toString(year), "in", name, "for group", group))
+            data<-getCensus(
+                        name = tablename, 
+                        vintage = year,
+                        vars = paste0("group(",group,")"),
+                        region = "tract:*", 
+                        regionin = sprintf("state:%02d", STATEFP)
+                        ) %>% 
+                    select(
+                        any_of(c(relevant_variables, "state", "county", "tract", "GEO_ID"))
+                        ) %>% 
+                    pivot_longer(
+                        cols=!c('state','county','tract','GEO_ID'), 
+                        names_to = "variable", 
+                        values_to = "value")
+            toc()
+            return(data)
+                }) %>%
+        do.call(rbind,.) %>% 
+        as.data.frame 
+    
+    #TODO check
+    data_from_api<-data_from_api %>%
+      pivot_wider(names_from = variable,
+                  values_from = value)
+    
+    census_meta_sub <- census_meta %>% filter(downloaded ==FALSE) 
+    
+    for(i in 1:nrow(census_meta_sub)){
+      var <- census_meta_sub[i,"variable"]
+      tot_var <- census_meta_sub[i,"tot_var"]
+      ntot_var <- census_meta_sub[i,"ntot_var"]
+      data_from_api[,var] <- data_from_api[,tot_var]- data_from_api[,ntot_var]
+    }
+    
+    data_from_api<-data_from_api %>%
+      pivot_longer(
+        cols=!c('state','county','tract','GEO_ID'), 
+        names_to = "variable", 
+        values_to = "value")
     
     write.csv(data_from_api,filepathCens, row.names = FALSE) 
     toc()
   }
 })
 toc()
-
-
-
-
-
