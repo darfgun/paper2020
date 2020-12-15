@@ -190,39 +190,37 @@ if (!file.exists(filepathCensMeta)){
       ntot_var = NA
     )
   
-  census_meta_pairs <- census_meta %>%
-    group_by(year, gender, gender_label, min_age, max_age, race)%>% #TODO suppress message
-    summarise(number= n(), #TODO genügt so nicht
-              tot_var = first(variable),
-              tot_his = first(hispanic_origin),
-              ntot_var = last(variable),
-              ntot_his = last(hispanic_origin)
-    ) %>%
-    filter(number == 2,
-           #!("HISPANIC OR LATINO" %in% c(tot_his,ntot_his))
-    ) %>% 
-    mutate(#swap variables if necessary
-      tot_var = ifelse(tot_his == "all", tot_var, ntot_var),
-      ntot_var = ifelse(ntot_var == "HISPANIC OR LATINO", tot_var, ntot_var)
-    )
+  census_meta_all <- census_meta %>% filter(hispanic_origin == "all")
+  census_meta_nhis <- census_meta %>% filter(hispanic_origin == "NOT HISPANIC OR LATINO")
   
-  census_meta2 <- rbind( #TODO
-                     census_meta,
-                     data.frame(
-                       variable=census_meta_pairs$tot_var %>% paste0(., "C"),
-                       year = census_meta_pairs$year,
-                       group = NA,
-                       gender = census_meta_pairs$gender,
-                       gender_label = census_meta_pairs$gender_label,
-                       min_age = census_meta_pairs$min_age,
-                       max_age = census_meta_pairs$max_age,
-                       race = census_meta_pairs$race, #TODO
-                       hispanic_origin = rep("HISPANIC OR LATINO", nrow(census_meta_pairs)),
-                       downloaded = FALSE,
-                       tot_var = census_meta_pairs$tot_var,
-                       ntot_var = census_meta_pairs$ntot_var
-                     )
-                )
+  for(i in 1:nrow(census_meta_all)){
+    row <- census_meta_all[i,]
+    census_meta_nhis_sub <- census_meta_nhis %>%
+      filter(
+        year == row[["year"]],
+        gender_label == row[["gender_label"]],
+        race == row[["race"]],
+        min_age >= row[["min_age"]],
+        max_age <= row[["max_age"]]
+      )
+    
+    if(nrow(census_meta_nhis_sub) >0 &&
+       row[["min_age"]] == (census_meta_nhis_sub$min_age %>% min) &&
+       row[["max_age"]] == (census_meta_nhis_sub$max_age %>% max)){
+      
+      row_copy <- row %>% mutate(
+        tot_var = variable,
+        downloaded = FALSE,
+        variable = paste0(variable,"C"),
+        hispanic_origin = "HISPANIC OR LATINO" 
+      )
+      
+      row_copy$ntot_var[1] <- census_meta_nhis_sub$variable %>% list
+      
+      print(row_copy)
+      census_meta<-rbind(census_meta,row_copy)
+    }
+  }
     
   fwrite(census_meta,filepathCensMeta)
   toc()
