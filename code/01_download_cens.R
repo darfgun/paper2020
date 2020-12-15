@@ -27,7 +27,7 @@ tmpDir <- args[2]
 year <- args[3]
 
 #quits, if not downloadable year
-if(!year %in% c(2000,2011:2016)){
+if(!year %in% c(2000,2010:2016)){
   print(paste("can not download census data for", year))
   quit()
 }
@@ -162,7 +162,7 @@ if (!file.exists(filepathCensMeta)){
             unlist
           ifelse(length(a) <= 1, 
                  "all", 
-                 a[2])
+                 a[2] %>% substring(., 2))
           #fetch what comes after ","; e.g.: White alone, not hispanic or latino => not hispanic or latino
         }),
         race_his = NULL
@@ -191,22 +191,22 @@ if (!file.exists(filepathCensMeta)){
     )
   
   census_meta_pairs <- census_meta %>%
-    group_by(year, gender, gender_label, min_age, max_age, race)%>% 
-    summarise(number= n(),
+    group_by(year, gender, gender_label, min_age, max_age, race)%>% #TODO suppress message
+    summarise(number= n(), #TODO genügt so nicht
               tot_var = first(variable),
               tot_his = first(hispanic_origin),
               ntot_var = last(variable),
               ntot_his = last(hispanic_origin)
     ) %>%
     filter(number == 2,
-           !("HISPANIC OR LATINO" %in% c(tot_his,ntot_his))
+           #!("HISPANIC OR LATINO" %in% c(tot_his,ntot_his))
     ) %>% 
     mutate(#swap variables if necessary
       tot_var = ifelse(tot_his == "all", tot_var, ntot_var),
       ntot_var = ifelse(ntot_var == "HISPANIC OR LATINO", tot_var, ntot_var)
     )
   
-  census_meta <- rbind(
+  census_meta2 <- rbind( #TODO
                      census_meta,
                      data.frame(
                        variable=census_meta_pairs$tot_var %>% paste0(., "C"),
@@ -269,7 +269,6 @@ apply(states, 1, function(state){
         do.call(rbind,.) %>% 
         as.data.frame 
     
-    #TODO check
     data_from_api<-data_from_api %>%
       pivot_wider(names_from = variable,
                   values_from = value)
@@ -281,6 +280,7 @@ apply(states, 1, function(state){
       tot_var <- census_meta_sub[i,"tot_var"]
       ntot_var <- census_meta_sub[i,"ntot_var"]
       data_from_api[,var] <- data_from_api[,tot_var]- data_from_api[,ntot_var]
+      #TODO
     }
     
     data_from_api<-data_from_api %>%

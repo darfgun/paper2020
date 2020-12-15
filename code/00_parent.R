@@ -97,6 +97,7 @@ if (!file.exists(censDir)){
 
 #paths of scripts
 download.cens.script <- file.path(code.dir, '01_download_cens.R')
+interp.script <- file.path(code.dir, '01_interp.R')
 download.script <- file.path(code.dir, '01_download.R')
 assignTract.script <- file.path(code.dir, '02_ass_trac.R')
 mrbrtRR.script <- file.path(code.dir, '03_mrbrt_rr.R')
@@ -115,14 +116,13 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2011)
+years <- c(2010)
 
 # Run code
-for(year in years)
-  runscript(script=download.cens.script, args = paste(censDir,tmpDir, year))
-
-#TODO Hispanic or Latino via complement Menge
-#TODO interpolation
+#complement ding stimmt noch nicht. erfasst nicht alle
+runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
+#runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
+#runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
 for(year in years){
   args <- paste(year, #1
