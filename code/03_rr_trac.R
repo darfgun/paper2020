@@ -44,8 +44,8 @@ causes_ages <- file.path(tmpDir, "causes_ages.csv") %>% read.csv
 tic(paste("Assigned RR to each tract for year",toString(year)))
 #loop over all states
 apply(states, 1, function(state){
-  STUSPS<-state[4]
-  name<-state[5]
+  STUSPS<-state["STUSPS"]
+  name<-state["NAME"]
   
   #path, where result should be stored
   trac_rrDirX <- paste0("trac_rr_",toString(year),"_",STUSPS,".csv") %>%

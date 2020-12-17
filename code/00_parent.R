@@ -37,41 +37,23 @@ setwd(h_root)
 dataDir <-file.path(h_root, "data")
 dir.create(dataDir, recursive = T, showWarnings = F)
 
+
 #directory contains variables used in calculations
 tmpDir <-file.path(dataDir, "tmp")
-if (!file.exists(tmpDir)){
-  dir.create(tmpDir)
-  fileConn<-file(file.path(tmpDir,"readme.txt"))
-  writeLines(c("This directory contains variables used in calculations"), fileConn)
-  close(fileConn)
-} 
+dir.create(tmpDir, recursive = T, showWarnings = F)
 
 #directory for downloaded PM exposure data
 expDir <-file.path(dataDir, "01_exposure")
-if (!file.exists(expDir)){
-  dir.create(expDir)
-  fileConn<-file(file.path(expDir,"readme.txt"))
-  writeLines(c("This directory contains PM exposure data","downloaded from ftp://stetson.phys.dal.ca/jmeng/HEI2018-HistoricalPM25/historicalPM25/"), fileConn)
-  close(fileConn)
-} 
+dir.create(expDir, recursive = T, showWarnings = F)
+
 
 #directory for downloaded tract shape files
 tracDir <-file.path(dataDir, "02_tracts")
-if (!file.exists(tracDir)){
-  dir.create(tracDir)
-  fileConn<-file(file.path(tracDir,"readme.txt"))
-  writeLines(c("This directory contains census shape files","downloaded via the R package tigris"), fileConn)
-  close(fileConn)
-} 
+dir.create(tracDir, recursive = T, showWarnings = F)
 
 #this directory contains calculated year - census tract - pm level tuples
 exp_tracDir <-file.path(dataDir, "03_exp_tracts")
-if (!file.exists(exp_tracDir)){
-  dir.create(exp_tracDir)
-  fileConn<-file(file.path(exp_tracDir,"readme.txt"))
-  writeLines(c("This directory contains calculated year - census tract - pm level tuples"), fileConn)
-  close(fileConn)
-} 
+dir.create(exp_tracDir, recursive = T, showWarnings = F)
 
 exp_rrDir <-file.path(dataDir, "04_exp_rr")
 if (!file.exists(exp_rrDir)) warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
@@ -79,21 +61,16 @@ if (!file.exists(exp_rrDir)) warning("The mrbrt_summary files from Cohen (2019) 
 
 #directory for downloaded census data
 trac_rrDir <-file.path(dataDir, "05_tracts_rr")
-if (!file.exists(trac_rrDir)){
-  dir.create(trac_rrDir)
-  fileConn<-file(file.path(trac_rrDir,"readme.txt"))
-  writeLines(c("This directory contains calculated year - census tract - age group - RR level tuples"), fileConn)
-  close(fileConn)
-} 
+dir.create(trac_rrDir, recursive = T, showWarnings = F)
 
 #directory for downloaded census data
 censDir <-file.path(dataDir, "06_census")
-if (!file.exists(censDir)){
-  dir.create(censDir)
-  fileConn<-file(file.path(censDir,"readme.txt"))
-  writeLines(c("This directory contains census data","downloaded via the R package censusapi"), fileConn)
-  close(fileConn)
-} 
+dir.create(censDir, recursive = T, showWarnings = F)
+
+#directory for census data aggregated by PM exposure and county/hhs region/census region
+cens_agrDir <-file.path(dataDir, "07_census_agr")
+dir.create(cens_agrDir, recursive = T, showWarnings = F)
+agr_by <- "county" #c("county","Census_Region","Census_division","hhs_region_number","state")
 
 #paths of scripts
 download.cens.script <- file.path(code.dir, '01_download_cens.R')
@@ -102,6 +79,7 @@ download.script <- file.path(code.dir, '01_download.R')
 assignTract.script <- file.path(code.dir, '02_ass_trac.R')
 mrbrtRR.script <- file.path(code.dir, '03_mrbrt_rr.R')
 assignRR.script <- file.path(code.dir, '03_rr_trac.R')
+cens_agr.script <- file.path(code.dir, '04_aggregate.R')
 
 # load packages, install if missing
 packages <- c() 
@@ -133,10 +111,13 @@ for(year in years){
                 exp_tracDir,#6
                 exp_rrDir,#7
                 trac_rrDir,#8
-                censDir)#9
+                censDir, #9
+                cens_agrDir, #10
+                agr_by) #11
   
   #runscript(script=download.script, args = args)
   #runscript(script=assignTract.script, args = args)
   #runscript(script=mrbrtRR.script, args = args)
   #runscript(script=assignRR.script, args = args)
+  #runscript(script=cens_agr.script, args = args)
 }

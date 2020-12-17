@@ -9,7 +9,7 @@
 rm(list=ls(all=TRUE))
 
 # load packages, install if missing 
-packages <- c("dplyr", "magrittr",  "censusapi","stringr","data.table","tidyverse", "tigris","tictoc")
+packages <- c("dplyr", "magrittr",  "censusapi","stringr","data.table","tidyverse", "tigris","tictoc","cdcfluview")
 
 options(tigris_use_cache = FALSE) 
 for(p in packages){
@@ -37,11 +37,23 @@ if(!year %in% c(2000,2010:2016)){
 filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)){
   #excluding Alaska, Hawaii, American Samoa, Guam, Commonwealth of the Northern Mariana Islands, Puerto Rico, United States Virgin Islands
-  states<-states() %>%
+  states1<-states() %>%
     as.data.frame %>%
-    select(c(1:3,6,7)) %>%
+    select(c(REGION,DIVISION,STATEFP,STUSPS,NAME)) %>%
     filter(!(STUSPS %in% c("AK",'HI','AS','GU','MP','PR','VI'))) %>%
-    arrange(STATEFP) 
+    arrange(STATEFP) %>%
+    setnames(c("REGION","DIVISION"), 
+             c("Census_Region","Census_division")) 
+  
+  data(hhs_regions)
+  
+  states2<-hhs_regions %>% 
+    as.data.frame %>%
+    select(c(region_number,state_or_territory))%>%
+    setnames(c("state_or_territory","region_number"), 
+             c("NAME","hhs_region_number")) 
+  
+  states<-merge(states1,states2) 
   
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
@@ -214,20 +226,17 @@ if (!file.exists(filepathCensMeta)){
         variable = paste0(variable,"C"),
         hispanic_origin = "HISPANIC OR LATINO" 
       )
-      
       row_copy$ntot_var[1] <- census_meta_nhis_sub$variable %>% list
-      
-      print(row_copy)
+
       census_meta<-rbind(census_meta,row_copy)
     }
   }
     
   fwrite(census_meta,filepathCensMeta)
   toc()
-}else{
-  census_meta <- read.csv(filepathCensMeta)
 }
 
+census_meta <- read.csv(filepathCensMeta)
 relevant_variables <- census_meta$variable %>% unique
 
 ##--- download sex by age for each race---
@@ -236,9 +245,9 @@ dir.create(censDir, recursive = T, showWarnings = F)
 
 tic(paste("Downloaded census data in year",toString(year)))
 apply(states, 1, function(state){
-  STATEFP <- state[3] %>% as.numeric
-  STUSPS<-state[4]
-  name<-state[5]
+  STATEFP <- state["STATEFP"] %>% as.numeric
+  STUSPS<-state["STUSPS"]
+  name<-state["NAME"]
   
   filepathCens<- paste0("census_",toString(year),"_",STUSPS,".csv") %>% 
                     file.path(censDir, .) 
@@ -260,34 +269,50 @@ apply(states, 1, function(state){
                     pivot_longer(
                         cols=!c('state','county','tract','GEO_ID'), 
                         names_to = "variable", 
-                        values_to = "value")
+                        values_to = "pop_size")
+            print("test")
             toc()
             return(data)
                 }) %>%
         do.call(rbind,.) %>% 
         as.data.frame 
     
+    fwrite(data_from_api,filepathCens, row.names = FALSE) 
+    data_from_api<-filepathCens%>% read.csv
+    
     data_from_api<-data_from_api %>%
-      pivot_wider(names_from = variable,
-                  values_from = value)
+                        group_by(variable) %>%
+                        mutate(row = row_number()) %>%
+                        pivot_wider(names_from = variable, 
+                                    values_from = pop_size) %>%
+                        select(-row)
     
     census_meta_sub <- census_meta %>% filter(downloaded ==FALSE) 
     
-    for(i in 1:nrow(census_meta_sub)){
+    for(i in 1:nrow(census_meta_sub)){ 
       var <- census_meta_sub[i,"variable"]
       tot_var <- census_meta_sub[i,"tot_var"]
-      ntot_var <- census_meta_sub[i,"ntot_var"]
-      data_from_api[,var] <- data_from_api[,tot_var]- data_from_api[,ntot_var]
-      #TODO
+      
+      ntot_var <- census_meta_sub[i,"ntot_var"] %>% 
+        strsplit(.,"|",fixed=TRUE) %>% 
+        unlist
+      
+      data_ntot<-data_from_api[,ntot_var]%>% 
+        apply(., 2, as.numeric)%>% 
+        rowSums %>% 
+        unlist
+      
+      data_from_api[,var] <- (data_from_api[,tot_var]%>% unlist) - data_ntot 
     }
     
     data_from_api<-data_from_api %>%
       pivot_longer(
         cols=!c('state','county','tract','GEO_ID'), 
         names_to = "variable", 
-        values_to = "value")
+        values_to = "pop_size")%>%
+      filter(!is.na(pop_size))
     
-    write.csv(data_from_api,filepathCens, row.names = FALSE) 
+    fwrite(data_from_api,filepathCens, row.names = FALSE) 
     toc()
   }
 })

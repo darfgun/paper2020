@@ -67,8 +67,8 @@ dir.create(exp_tracDir, recursive = T, showWarnings = F)
 ##-----------------calculation---------------
 tic(paste("Assigned pm exposure to each tract for year",toString(year), "for all states"))
 apply(states, 1, function(x){
-  STUSPS<-x[4]
-  name<-x[5]
+  STUSPS<-state["STUSPS"]
+  name<-state["NAME"]
   
   exp_tracDirX <- paste0("exp_trac_",toString(year),"_",STUSPS,".csv") %>%
     file.path(exp_tracDir, .)

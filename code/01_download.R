@@ -81,8 +81,8 @@ filepathTr <- file.path(tracDir, toString(year))
 dir.create(filepathTr, recursive = T, showWarnings = F)
   
 apply(states, 1, function(x){
-  STUSPS<-x[4]
-  name<-x[5]
+  STUSPS<-state["STUSPS"]
+  name<-state["NAME"]
   
   filepathTrX <- paste0("tracts_",toString(year),"_",STUSPS,".rds") %>%
                       file.path(filepathTr, .)
