@@ -53,7 +53,8 @@ if (!file.exists(filepathStates)){
     setnames(c("state_or_territory","region_number"), 
              c("NAME","hhs_region_number")) 
   
-  states<-merge(states1,states2) 
+  states<-merge(states1,states2) %>%
+              mutate(nation = "us")
   
   write.csv(states,filepathStates, row.names = FALSE)
 }else{
@@ -190,11 +191,23 @@ if (!file.exists(filepathCensMeta)){
   
   setnames(census_meta, "name", "variable") #rename for later purpose
   
+  
+  ##add corresponding age_group_id from causes ages
+  census_meta <- census_meta %>% 
+                  mutate(
+                    age_group_id=seq(25,95,5)[
+                                  findInterval(
+                                    max_age, 
+                                    seq(25,90,5), 
+                                    left.open =  TRUE
+                                  )+1]
+                  )
+  
   #drop unrequired information
   fwrite(census_meta,filepathCensMeta)
   census_meta <- read.csv(filepathCensMeta)
   
-  #add some useful columns
+  ##add some useful columns to calculate complement of "NOT HISPANIC OR LATINO"
   census_meta<- census_meta%>%
     mutate(
       downloaded= TRUE, 
@@ -270,7 +283,6 @@ apply(states, 1, function(state){
                         cols=!c('state','county','tract','GEO_ID'), 
                         names_to = "variable", 
                         values_to = "pop_size")
-            print("test")
             toc()
             return(data)
                 }) %>%

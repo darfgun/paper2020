@@ -30,32 +30,23 @@ censDir <-args[9]
 cens_agrDir <-args[10]
 agr_by <-args[11]
 
-
-#TODO löschen
-#year <- 2010
-#tmpDir <-"/Users/default/Desktop/own_code2/data/tmp"
-#exp_tracDir<-"/Users/default/Desktop/own_code2/data/03_exp_tracts"
-#censDir <-"/Users/default/Desktop/own_code2/data/06_census"
-#cens_agrDir <-"/Users/default/Desktop/own_code2/data/07_census_agr"
-#agr_by <-"Census_Region"
-
-if(!agr_by %in% c("county","Census_Region","Census_division","hhs_region_number","state")){
+if(!agr_by %in% c("county","Census_Region","Census_division","hhs_region_number","state","nation")){
   print(paste(agr_by,"is an invalid agr_by argument"))
   quit()
 }
 
-cens_agrDir <- cens_agrDir %>% file.path(.,agr_by,year)
-dir.create(cens_agrDir, recursive = T, showWarnings = F)
-
 cens_agrDirC <- cens_agrDir %>% file.path(.,"county",year)
 dir.create(cens_agrDirC, recursive = T, showWarnings = F)
+
+cens_agrDir <- cens_agrDir %>% file.path(.,agr_by,year)
+dir.create(cens_agrDir, recursive = T, showWarnings = F)
 
 states <- file.path(tmpDir, "states.csv") %>% read.csv
 
 ##----
 
-#apply(states, 1, function(state){
-  state <- states[1,] #TODO löschen
+apply(states, 1, function(state){
+#  state <- states[1,] #TODO löschen
   STUSPS<-state[["STUSPS"]] #TODO überall
   name<-state[["NAME"]]
 
@@ -70,7 +61,7 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv
                             group_by(variable) %>%
                             mutate(row = row_number()) %>%
                             pivot_wider(names_from = variable,
-                                        values_from = value) %>%#TODO pop_size
+                                        values_from = pop_size) %>%
                             select(-row)
     
     exp_tracData <-paste0("exp_trac_",toString(year),"_",STUSPS,".csv") %>%
@@ -92,30 +83,43 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv
     write.csv(trac_cens_expData, cens_agrDirCX)
     toc()
   }
-#})
+})
     
 if(agr_by != "county"){
   regions <- states[,agr_by] %>%unique
   for(region in regions){
-    cens_agrDirCX <- paste0("cens_agr_",toString(year),"_",region,".csv") %>%
+    cens_agrDirX <- paste0("cens_agr_",toString(year),"_",region,".csv") %>%
                         file.path(cens_agrDir, .)
     
-    if(!file.exists(cens_agrDirCX)){
+    if(!file.exists(cens_agrDirX)){
       
       tic(paste("Aggregated Census data", region, "in year", year, "by pm and",agr_by))
-      statesX <- states[states[,agr_by] == region,]
-      
-      trac_cens_expData<-lapply(statesX, function(state){
-        STUSPS<-state[["STUSPS"]]
-        cens_agrDirCX <- paste0("cens_agr_",toString(year),"_",STUSPS,".csv") %>%
-          file.path(cens_agrDirC, .)
+      statesX <- states[states[,agr_by] == region,"STUSPS"]
+
+      cens_agr<-lapply(statesX, function(STUSPS){
+        paste0("cens_agr_",toString(year),"_",STUSPS,".csv") %>%
+          file.path(cens_agrDirC, .) %>%
+          read.csv
       
       }) %>% 
         do.call(rbind,.) %>%
+        as.data.frame %>%
         group_by(variable,pm) %>%
-        summarise(pop_size=sum(pop_size))
+        summarise(pop_size=sum(pop_size)) 
       
-      write.csv(trac_cens_expData,cens_agrDirCX)
+      #add proportions
+      cens_agr <- cens_agr %>%
+        group_by(variable)%>%
+        summarise(totals = sum(pop_size)) %>%
+        inner_join(cens_agr) %>%
+        mutate(prop = pop_size/totals)
+      
+      #add region
+      cens_agr[,agr_by]<-region
+      
+      #select relevant
+      cens_agr <- cens_agr %>% select(agr_by, variable, pm, prop)
+      write.csv(cens_agr,cens_agrDirX)
       toc()
     }
   }

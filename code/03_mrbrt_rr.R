@@ -110,7 +110,7 @@ apply(causes_ages,1, function(cause_age){
       plotDirX <- paste0(label_cause,"_", age_group_id,".png") %>%
                       file.path(plotsDir,.)
       
-      if(TRUE && !file.exists(plotDirX)){
+      if( !file.exists(plotDirX)){
         ggplot(data = exp_rr, aes(x = exposure_spline, y = rr)) + 
                 geom_point()+
                 xlab("Exposure") +

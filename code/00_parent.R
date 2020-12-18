@@ -70,7 +70,10 @@ dir.create(censDir, recursive = T, showWarnings = F)
 #directory for census data aggregated by PM exposure and county/hhs region/census region
 cens_agrDir <-file.path(dataDir, "07_census_agr")
 dir.create(cens_agrDir, recursive = T, showWarnings = F)
-agr_by <- "county" #c("county","Census_Region","Census_division","hhs_region_number","state")
+agr_by <- "Census_Region" #c("county","Census_Region","Census_division","hhs_region_number","state","nation")
+
+pafDir <-file.path(dataDir, "08_paf")
+dir.create(pafDir, recursive = T, showWarnings = F)
 
 #paths of scripts
 download.cens.script <- file.path(code.dir, '01_download_cens.R')
@@ -80,6 +83,7 @@ assignTract.script <- file.path(code.dir, '02_ass_trac.R')
 mrbrtRR.script <- file.path(code.dir, '03_mrbrt_rr.R')
 assignRR.script <- file.path(code.dir, '03_rr_trac.R')
 cens_agr.script <- file.path(code.dir, '04_aggregate.R')
+paf.script <- file.path(code.dir, '05_paf.R')
 
 # load packages, install if missing
 packages <- c() 
@@ -94,11 +98,11 @@ for(p in packages){
 
 
 #--------parameters of code-------------------
-years <- c(2010)
+years <- c(2000)
 
 # Run code
 #complement ding stimmt noch nicht. erfasst nicht alle
-runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
+#runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
 #runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
 #runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
@@ -113,11 +117,13 @@ for(year in years){
                 trac_rrDir,#8
                 censDir, #9
                 cens_agrDir, #10
-                agr_by) #11
+                agr_by, #11
+                pafDir) #12
   
   #runscript(script=download.script, args = args)
   #runscript(script=assignTract.script, args = args)
   #runscript(script=mrbrtRR.script, args = args)
   #runscript(script=assignRR.script, args = args)
   #runscript(script=cens_agr.script, args = args)
+  runscript(script=paf.script, args = args)
 }
