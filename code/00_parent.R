@@ -114,23 +114,23 @@ years <- c(2000)
 
 
 #TODO complement ding stimmt noch nicht. erfasst nicht alle
- runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
+ runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, 2000))
 # runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
 for (year in years) {
   args <- paste(
     year, # 1
-    dataDir, # 2
-    tmpDir, # 3
-    expDir, # 4
-    tracDir, # 5
-    exp_tracDir, # 6
+    data.dir, # 2
+    tmp.dir, # 3
+    exp.dir, # 4
+    trac.dir, # 5
+    exp.rr.dir, # 6
     exp_rrDir, # 7
-    censDir, # 8
-    cens_agrDir, # 9 
+    dem.dir, # 8
+    dem.agr.dir, # 9 
     agr_by, # 10
-    pafDir # 11
+    paf.dir # 11
   ) 
 
    runscript(script=download.script, args = args)
