@@ -77,7 +77,8 @@ apply(states, 1, function(state) {
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
       read.csv() %>%
-      setnames(c("TRACT", "COUNTYFP"), c("tract", "county"))
+      setnames(c("TRACT", "COUNTYFP"), 
+               c("tract", "county"))
 
     trac_cens_expData <- full_join(trac_censData,
       exp_tracData,
