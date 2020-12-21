@@ -26,9 +26,9 @@ args <- commandArgs(trailingOnly = T)
 year <- args[1]
 tmpDir <- args[3]
 exp_tracDir <- args[6]
-censDir <- args[9]
-cens_agrDir <- args[10]
-agr_by <- args[11]
+censDir <- args[8]
+cens_agrDir <- args[9]
+agr_by <- args[10]
 
 # TODO löschen
 year <- 2000

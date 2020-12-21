@@ -9,13 +9,11 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse", "tigris", "tictoc", "cdcfluview")
+packages <- c("dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse", 
+              "tigris", "tictoc", "cdcfluview","testthat")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
-  if (p %in% rownames(installed.packages()) == FALSE) {
-    install.packages(p)
-  }
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
 
@@ -32,16 +30,18 @@ if (!year %in% c(2000, 2010:2016)) {
   quit()
 }
 
-## ------download useful data to tmp-----
+## ----------download useful data to tmp-------------------------------------------------------------------------------
 # download states data
 filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)) {
+  #only contiguous US
   # excluding Alaska, Hawaii, American Samoa, Guam, Commonwealth of the Northern Mariana Islands, Puerto Rico, United States Virgin Islands
   states1 <- states() %>%
-    as.data.frame() %>%
+    as.data.frame %>%
     select(c(REGION, DIVISION, STATEFP, STUSPS, NAME)) %>%
     filter(!(STUSPS %in% c("AK", "HI", "AS", "GU", "MP", "PR", "VI"))) %>%
     arrange(STATEFP) %>%
+    #rename it can be merged later
     setnames(
       c("REGION", "DIVISION"),
       c("Census_Region", "Census_division")
@@ -50,13 +50,14 @@ if (!file.exists(filepathStates)) {
   data(hhs_regions)
 
   states2 <- hhs_regions %>%
-    as.data.frame() %>%
+    as.data.frame %>%
     select(c(region_number, state_or_territory)) %>%
     setnames(
       c("state_or_territory", "region_number"),
       c("NAME", "hhs_region_number")
     )
-
+  
+  #merge for full information
   states <- merge(states1, states2) %>%
     mutate(nation = "us")
 
@@ -66,9 +67,9 @@ if (!file.exists(filepathStates)) {
 }
 rm(filepathStates)
 
-### ------------------download census data files--------------------
+### ------------------------download demographic data-----------------------------------------------------------------
 # Add key to .Renviron
-key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" # TODO
+key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
 Sys.setenv(CENSUS_KEY = key)
 
 
@@ -79,18 +80,19 @@ dir.create(censMetaDir, recursive = T, showWarnings = F)
 filepathCensMeta <- paste0("cens_meta_", toString(year), ".csv") %>%
   file.path(censMetaDir, .)
 
-# relevant groups for each year and tablename
+# relevant groups for each year and table names
 if (year == 2000) {
   # decennical census, sex by age for races
-  groups <- c("P012A", "P012B", "P012C", "P012D", "PCT012J", "PCT012K", "PCT012L", "PCT012M")
+  groups <- c("P012A", "P012B", "P012C", "P012D","P012E", "P012I","PCT012J", "PCT012K", "PCT012L", "PCT012M") 
   tablename <- "dec/sf1"
 } else if (year == 2010) {
   # decennical census, sex by age for races
-  groups <- c("PCT12A", "PCT12B", "PCT12C", "PCT12D", "PCT12D", "PCT12E", "PCT12I", "PCT12J", "PCT12K", "PCT12L", "PCT12M")
+  groups <- c("PCT12A", "PCT12B", "PCT12C", "PCT12D", "PCT12E", "PCT12I", "PCT12J", "PCT12K", "PCT12L", "PCT12M") 
   tablename <- "dec/sf1"
 } else if (year %in% 2011:2016) {
-  # american community survey
+  # american community survey, sex by age for races
   groups <- c("B01001A", "B01001B", "B01001C", "B01001D", "B01001E", "B01001H")
+  #"not hispanic or latino" only available for white
   tablename <- "acs/acs5"
 }
 
@@ -345,3 +347,6 @@ apply(states, 1, function(state) {
   }
 })
 toc()
+#file.path("tests","test_01_download_cens.R")
+#test_file("test_01_download_cens.R")
+#test_file("C:\Users\Daniel\Desktop\paper2020\code\tests\test_01_download_cens.R")

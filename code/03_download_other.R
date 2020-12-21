@@ -9,26 +9,12 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "RCurl", "magrittr", "tigris", "stringr", "data.table", "tidyverse", "tictoc") #
+packages <- c("dplyr", "RCurl", "magrittr", "tigris", "stringr", "data.table", "tidyverse", "tictoc","rhdf5") #
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
-  if (p %in% rownames(installed.packages()) == FALSE) {
-    install.packages(p)
-  }
-
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
-
-
-# download rhdf5
-if ("rhdf5" %in% rownames(installed.packages()) == FALSE) {
-  if (!requireNamespace("BiocManager", quietly = TRUE)) {
-    install.packages("BiocManager")
-  }
-  BiocManager::install("rhdf5")
-}
-suppressWarnings(library(rhdf5))
 
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
@@ -80,7 +66,10 @@ rm(filenameExp, filepathExp, filepathM)
 filepathTr <- file.path(tracDir, toString(year))
 dir.create(filepathTr, recursive = T, showWarnings = F)
 
-apply(states, 1, function(x) {
+glimpse(states)
+print("test")
+apply(states, 1, function(state) {
+  glimpse(state)
   STUSPS <- state["STUSPS"]
   name <- state["NAME"]
 

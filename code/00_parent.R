@@ -10,8 +10,27 @@
 # clear memory
 rm(list = ls(all = TRUE))
 
+#install packages if missing
+packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
+             "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat","tidyverse","tigris","tmap")
+
+options(tigris_use_cache = FALSE)
+for (p in packages) {
+  if (p %in% rownames(installed.packages()) == FALSE) {
+    install.packages(p)
+  }
+}
+
+# download rhdf5
+if ("rhdf5" %in% rownames(installed.packages()) == FALSE) {
+  if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+  }
+  BiocManager::install("rhdf5")
+}
+
 # runtime configuration
-runscript <- function(script, args = "") {}
+# run cripts from command line depending on OS
 if (Sys.info()["sysname"] == "Darwin") {
   runscript <- function(script, args = "") {
     system(paste("Rscript", script, args))
@@ -22,59 +41,57 @@ if (Sys.info()["sysname"] == "Darwin") {
   runscript <- function(script, args = "") {
     system(paste(exec, "--vanilla", script, args))
   }
-} else if (Sys.info()["sysname"] == "Linux") {
-  # https://stackoverflow.com/questions/3560641/running-an-rscript-on-mac-os-x
-} else {
+}else {
   print(paste("no handler for", Sys.info()["sysname"], "implemented yet."))
 }
 
-## ----------------directories---------
+## ----------------directories--------------------------------------------------------------------------------
 # create data directory, setwd
 code.dir <- dirname(rstudioapi::getSourceEditorContext()$path)
 h_root <- dirname(code.dir)
 setwd(h_root)
 
-# create directory, where downloaded and calculated data is stored
-dataDir <- file.path(h_root, "data")
-dir.create(dataDir, recursive = T, showWarnings = F)
+# create directory, where all downloaded and calculated data is stored
+data.dir <- file.path(h_root, "data")
+dir.create(data.dir, recursive = T, showWarnings = F)
 
 
 # directory contains variables used in calculations, which several scripts might need
-tmpDir <- file.path(dataDir, "tmp")
-dir.create(tmpDir, recursive = T, showWarnings = F)
+tmp.dir <- file.path(data.dir, "tmp")
+dir.create(tmp.dir, recursive = T, showWarnings = F)
 
 # directory for downloaded PM exposure data
-expDir <- file.path(dataDir, "01_exposure")
-dir.create(expDir, recursive = T, showWarnings = F)
+exp.dir <- file.path(data.dir, "01_exposure")
+dir.create(exp.dir, recursive = T, showWarnings = F)
 
 
-# directory for downloaded tract shape files
-tracDir <- file.path(dataDir, "02_tracts")
-dir.create(tracDir, recursive = T, showWarnings = F)
+# directory for downloaded TIGER/Line tract shape files
+trac.dir <- file.path(data.dir, "02_tracts")
+dir.create(trac.dir, recursive = T, showWarnings = F)
 
 # this directory contains calculated year - census tract - pm level tuples
-exp_tracDir <- file.path(dataDir, "03_exp_tracts")
-dir.create(exp_tracDir, recursive = T, showWarnings = F)
+trac.exp.dir <- file.path(data.dir, "03_exp_tracts")
+dir.create(trac.exp.dir, recursive = T, showWarnings = F)
 
-exp_rrDir <- file.path(dataDir, "04_exp_rr")
-if (!file.exists(exp_rrDir)) warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
+exp.rr.dir <- file.path(data.dir, "04_exp_rr")
+if (!file.exists(exp.rr.dir)) warning("The mrbrt_summary files from Cohen (2019) need to be downloaded")
 
 # directory for downloaded demographic census data
-censDir <- file.path(dataDir, "06_census")
-dir.create(censDir, recursive = T, showWarnings = F)
+dem.dir <- file.path(data.dir, "06_demog")
+dir.create(dem.dir, recursive = T, showWarnings = F)
 
-# directory for census data aggregated by PM exposure and county/hhs region/census region
-cens_agrDir <- file.path(dataDir, "07_census_agr")
-dir.create(cens_agrDir, recursive = T, showWarnings = F)
+# directory for demographic data grouped by PM exposure and aggregated by county/hhs region/census region
+dem.agr.dir <- file.path(data.dir, "07_dem.agr")
+dir.create(dem.agr.dir, recursive = T, showWarnings = F)
 agr_by <- "Census_Region" # c("county","Census_Region","Census_division","hhs_region_number","state","nation")
 
-pafDir <- file.path(dataDir, "08_paf")
-dir.create(pafDir, recursive = T, showWarnings = F)
+paf.dir <- file.path(data.dir, "08_paf")
+dir.create(paf.dir, recursive = T, showWarnings = F)
 
 # paths of scripts
 download.cens.script <- file.path(code.dir, "01_download_cens.R")
 interp.script <- file.path(code.dir, "02_interp.R")
-download.script <- file.path(code.dir, "03_download_other")
+download.script <- file.path(code.dir, "03_download_other.R")
 assignTract.script <- file.path(code.dir, "04_ass_trac.R")
 mrbrtRR.script <- file.path(code.dir, "05_mrbrt_rr.R")
 cens_agr.script <- file.path(code.dir, "06_aggregate.R")
@@ -95,9 +112,9 @@ for (p in packages) {
 #--------parameters of code-------------------
 years <- c(2000)
 
-# Run code
-# complement ding stimmt noch nicht. erfasst nicht alle
-# runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
+
+#TODO complement ding stimmt noch nicht. erfasst nicht alle
+ runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2000))
 # runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
@@ -110,16 +127,15 @@ for (year in years) {
     tracDir, # 5
     exp_tracDir, # 6
     exp_rrDir, # 7
-    "trac_rrDir", # 8 #TODO
-    censDir, # 9
-    cens_agrDir, # 10
-    agr_by, # 11
-    pafDir
-  ) # 12
+    censDir, # 8
+    cens_agrDir, # 9 
+    agr_by, # 10
+    pafDir # 11
+  ) 
 
-  # runscript(script=download.script, args = args)
-  # runscript(script=assignTract.script, args = args)
-  # runscript(script=mrbrtRR.script, args = args)
+   runscript(script=download.script, args = args)
+   runscript(script=assignTract.script, args = args)
+   runscript(script=mrbrtRR.script, args = args)
   runscript(script = cens_agr.script, args = args)
   runscript(script = paf.script, args = args)
 }
