@@ -25,19 +25,19 @@ args <- commandArgs(trailingOnly = T)
 
 year <- args[1]
 tmpDir <- args[3]
-exp_tracDir <- args[6]
+exp_tracDir <- args[7]
 censDir <- args[8]
 cens_agrDir <- args[9]
 agr_by <- args[10]
 
-# TODO lÃ¶schen
+#TODO löschen
 year <- 2000
-tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-exp_rrDir <- "/Users/default/Desktop/own_code2/data/04_exp_rr"
-censDir <- "/Users/default/Desktop/own_code2/data/06_census"
-cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_census_agr"
-agr_by <- "Census_Region"
-pafDir <- "/Users/default/Desktop/own_code2/data/08_paf"
+tmpDir <- args[3]
+exp_tracDir <- args[7]
+censDir <- args[8]
+cens_agrDir <- args[9]
+agr_by <- args[10]
+
 if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_number", "state", "nation")) {
   print(paste(agr_by, "is an invalid agr_by argument"))
   quit()
@@ -49,7 +49,9 @@ dir.create(cens_agrDirC, recursive = T, showWarnings = F)
 cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
 dir.create(cens_agrDir, recursive = T, showWarnings = F)
 
-states <- file.path(tmpDir, "states.csv") %>% read.csv()
+# load states, so we can loop over them
+states <- file.path(tmpDir, "states.csv") %>% read.csv
+
 
 ## ----
 

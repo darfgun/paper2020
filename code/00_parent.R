@@ -114,7 +114,6 @@ for (p in packages) {
 years <- c(2000)
 
 
-#TODO complement ding stimmt noch nicht. erfasst nicht alle
  runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, 2000))
 # runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
@@ -134,9 +133,9 @@ for (year in years) {
     paf.dir # 11
   ) 
 
-   runscript(script=download.script, args = args)
-   runscript(script=assignTract.script, args = args)
+  # runscript(script=download.script, args = args)
+  # runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-  #runscript(script = cens_agr.script, args = args)
+  runscript(script = cens_agr.script, args = args)
   #runscript(script = paf.script, args = args)
 }

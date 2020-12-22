@@ -46,8 +46,7 @@ filepathM <- file.path(tmpDir, filenameM)
 load(filepathM)
 
 # load states, so we can loop over them
-states <- file.path(tmpDir, "states.csv") %>%
-                read.csv
+states <- file.path(tmpDir, "states.csv") %>% read.csv
 
 # create folder, where calculations will be stored
 exp_tracDir <- file.path(exp_tracDir, toString(year))
