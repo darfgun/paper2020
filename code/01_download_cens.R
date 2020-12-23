@@ -25,6 +25,11 @@ censDir <- args[1]
 tmpDir <- args[2]
 year <- args[3]
 
+#TODO löschen
+#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+#tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+#year <- 2016
+
 # quits, if not downloadable year
 if (!year %in% c(2000, 2010:2016)) {
   print(paste("can not download census data for", year))
@@ -304,7 +309,13 @@ apply(states, 1, function(state) {
         vars = paste0("group(", group, ")"),
         region = "tract:*",
         regionin = sprintf("state:%02d", STATEFP)
-      ) %>%
+      ) 
+      #create GEO_ID, if it does not exist yet
+      if(!"GEO_ID" %in% colnames(data)){
+        tracts$GEO_ID <-paste0("1400000US",tracts$state,tracts$county,tracts$tract)
+      }
+      
+      data<- data%>%
         select(
           any_of(c(relevant_variables, "state", "county", "tract", "GEO_ID"))
         ) %>%

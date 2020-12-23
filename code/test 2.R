@@ -19,11 +19,11 @@ agr_by <- "county"
 #censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
 #cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
 
-tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-tracDir <-  "C:/Users/Daniel/Desktop/paper2020/data/02_tracts"
-exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
-censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
-cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
+#tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+#tracDir <-  "C:/Users/Daniel/Desktop/paper2020/data/02_tracts"
+#exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+#cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 
 reshape(trac_cens_expData, 
         direction = "long",
