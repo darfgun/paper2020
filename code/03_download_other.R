@@ -1,3 +1,4 @@
+
 #-------------------Header------------------------------------------------
 # Author: Daniel Fridljand
 # Date: 11/15/2020
@@ -22,6 +23,7 @@ year <- args[1]
 tmpDir <- args[3]
 expDir <- args[4]
 tracDir <- args[5]
+
 
 #-- load data---
 states <- file.path(tmpDir,"states.csv") %>% read.csv

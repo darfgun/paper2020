@@ -1,3 +1,4 @@
+
 #-------------------Header------------------------------------------------
 # Author: Daniel Fridljand
 # Date: 11/15/2020
@@ -46,7 +47,8 @@ filepathM <- file.path(tmpDir, filenameM)
 load(filepathM)
 
 # load states, so we can loop over them
-states <- file.path(tmpDir, "states.csv") %>% read.csv
+states <- file.path(tmpDir, "states.csv") %>%
+                read.csv
 
 # create folder, where calculations will be stored
 exp_tracDir <- file.path(exp_tracDir, toString(year))
@@ -71,8 +73,6 @@ apply(states, 1, function(state) {
     file.path(tracDir, toString(year), .) %>%
     readRDS(.)
 
-
-  # TODO optimze this by doing the whole process per county and not per tracts, group tibble
   tic(paste("Assigned pm exposure to each tract for year", toString(year), "in", name))
   # estimate pm exposure for each tract
   tracts$pm <- sapply(tracts$geometry, function(tract) {
@@ -147,9 +147,10 @@ apply(states, 1, function(state) {
   }
 
   ## -----save as csv--------
+  
   tracts <- tracts %>%
     as.data.frame() %>%
-    select(c("COUNTYFP", "TRACT", "pm")) # TODO GEO_ID
+    select(c("COUNTYFP", "TRACT", "pm")) # TODO 
 
   write.csv(tracts, exp_tracDirX, row.names = FALSE)
 })

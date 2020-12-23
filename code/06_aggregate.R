@@ -13,9 +13,6 @@ rm(list = ls(all = TRUE))
 packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc")
 
 for (p in packages) {
-  if (p %in% rownames(installed.packages()) == FALSE) {
-    install.packages(p)
-  }
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
 
@@ -30,13 +27,13 @@ censDir <- args[8]
 cens_agrDir <- args[9]
 agr_by <- args[10]
 
-#TODO l�schen
+#TODO l?schen
 year <- 2000
-tmpDir <- args[3]
-exp_tracDir <- args[7]
-censDir <- args[8]
-cens_agrDir <- args[9]
-agr_by <- args[10]
+tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
+exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
+censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
+cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
+agr_by <- "county"
 
 if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_number", "state", "nation")) {
   print(paste(agr_by, "is an invalid agr_by argument"))
@@ -56,32 +53,32 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv
 ## ----
 
 apply(states, 1, function(state) {
-  #  state <- states[1,] #TODO löschen
+  state <- states[1,] #TODO löschen
   STUSPS <- state[["STUSPS"]] # TODO überall
   name <- state[["NAME"]]
 
   cens_agrDirCX <- paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
-    file.path(cens_agrDirC, .)
+                        file.path(cens_agrDirC, .)
 
   if (!file.exists(cens_agrDirCX)) {
     tic(paste("Aggregated Census data in", name, "in year", year, "by pm and", agr_by))
     trac_censData <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(censDir, year, .) %>%
-      read.csv() %>%
-      group_by(variable) %>%
-      mutate(row = row_number()) %>%
+      read.csv %>%
       pivot_wider(
         names_from = variable,
         values_from = pop_size
-      ) %>%
-      select(-row)
+      )
+    #https://stackoverflow.com/questions/49186893/remove-leading-0s-with-stringr-in-r
 
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
       read.csv() %>%
       setnames(c("TRACT", "COUNTYFP"), 
                c("tract", "county"))
-
+    
+    if(nrow(exp_tracData)!=nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
+    
     trac_cens_expData <- full_join(trac_censData,
       exp_tracData,
       by = c("tract", "county")
