@@ -27,13 +27,19 @@ censDir <- args[8]
 cens_agrDir <- args[9]
 agr_by <- args[10]
 
-#TODO l?schen
+# TODO l?schen
 year <- 2000
-tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
-censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
-cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
 agr_by <- "county"
+
+# tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
+# exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
+# censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
+# cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
+
+tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 
 if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_number", "state", "nation")) {
   print(paste(agr_by, "is an invalid agr_by argument"))
@@ -47,61 +53,74 @@ cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
 dir.create(cens_agrDir, recursive = T, showWarnings = F)
 
 # load states, so we can loop over them
-states <- file.path(tmpDir, "states.csv") %>% read.csv
+states <- file.path(tmpDir, "states.csv") %>% read.csv()
 
 
 ## ----
 
 apply(states, 1, function(state) {
-  state <- states[1,] #TODO löschen
-  STUSPS <- state[["STUSPS"]] # TODO überall
+  STUSPS <- state[["STUSPS"]] 
   name <- state[["NAME"]]
 
   cens_agrDirCX <- paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
-                        file.path(cens_agrDirC, .)
+    file.path(cens_agrDirC, .)
 
   if (!file.exists(cens_agrDirCX)) {
     tic(paste("Aggregated Census data in", name, "in year", year, "by pm and", agr_by))
     trac_censData <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(censDir, year, .) %>%
-      read.csv %>%
+      read.csv() %>%
       pivot_wider(
         names_from = variable,
         values_from = pop_size
-      )
+      ) %>%
+      setnames("GEO_ID", "AFFGEOID")
 
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
-      read.csv() %>%
-      setnames("GEO_ID","AFFGEOID")
-    
-    if(nrow(exp_tracData)!=nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
-    
-    trac_cens_expData <- left_join(trac_censData,
+      read.csv()
+
+    if (nrow(exp_tracData) != nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
+
+    cens_agr <- left_join(trac_censData,
       exp_tracData,
       by = "AFFGEOID"
     ) %>%
-      pivot_longer(
-        cols = !c("state", "county", "tract", "AFFGEOID", "pm"),
-        names_to = "variable",
-        values_to = "pop_size"
+      setDT() %>%
+      melt(
+        id.vars = c("state", "county", "tract", "AFFGEOID", "pm"),
+        variable.name = "variable"
       ) %>%
-      filter(!is.na(pop_size)) %>%
       group_by(state, county, variable, pm) %>%
-      summarise(pop_size = sum(pop_size))
+      summarise(pop_size = sum(value))
 
-    write.csv(trac_cens_expData, cens_agrDirCX)
+    # add proportions
+    cens_agr <- cens_agr %>%
+      group_by(state, county, variable) %>%
+      summarise(totals = sum(pop_size)) %>%
+      filter(totals != 0)  %>%
+      inner_join(cens_agr) %>%
+      mutate(prop = pop_size / totals)
+
+    # TODO test, delete
+    # cens_agr2 <- cens_agr %>%
+    #  group_by(state, county, variable) %>%
+    #  summarise(sum_prop = sum(prop))
+
+    write.csv(cens_agr, cens_agrDirCX)
     toc()
   }
 })
 
+##--- different procedure if not county level
 if (agr_by != "county") {
-  regions <- states[, agr_by] %>% unique()
+  regions <- states[, agr_by] %>% unique
+  
   for (region in regions) {
     cens_agrDirX <- paste0("cens_agr_", toString(year), "_", region, ".csv") %>%
       file.path(cens_agrDir, .)
 
-    if (TRUE || !file.exists(cens_agrDirX)) { # TODO löschen
+    if (!file.exists(cens_agrDirX)) { # TODO löschen
 
       tic(paste("Aggregated Census data", region, "in year", year, "by pm and", agr_by))
       statesX <- states[states[, agr_by] == region, "STUSPS"]
