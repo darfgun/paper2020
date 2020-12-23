@@ -69,22 +69,20 @@ apply(states, 1, function(state) {
         names_from = variable,
         values_from = pop_size
       )
-    #https://stackoverflow.com/questions/49186893/remove-leading-0s-with-stringr-in-r
 
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
       read.csv() %>%
-      setnames(c("TRACT", "COUNTYFP"), 
-               c("tract", "county"))
+      setnames("GEO_ID","AFFGEOID")
     
     if(nrow(exp_tracData)!=nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
     
-    trac_cens_expData <- full_join(trac_censData,
+    trac_cens_expData <- left_join(trac_censData,
       exp_tracData,
-      by = c("tract", "county")
+      by = "AFFGEOID"
     ) %>%
       pivot_longer(
-        cols = !c("state", "county", "tract", "GEO_ID", "pm"),
+        cols = !c("state", "county", "tract", "AFFGEOID", "pm"),
         names_to = "variable",
         values_to = "pop_size"
       ) %>%

@@ -76,21 +76,30 @@ rm(filenameExp, filepathExp, filepathM)
 filepathTr <- file.path(tracDir, toString(year))
 dir.create(filepathTr, recursive = T, showWarnings = F)
 
-apply(states, 1, function(state) {
-  STUSPS <- state["STUSPS"]
-  name <- state["NAME"]
-
-  filepathTrX <- paste0("tracts_", toString(year), "_", STUSPS, ".rds") %>%
-    file.path(filepathTr, .)
-
-  if (!file.exists(filepathTrX)) {
-    tic(paste("Downloaded census tracts shape files for", year, name))
-    # TODO fallunterscheidung
-
-    tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
-    saveRDS(tracts, filepathTrX)
-    toc()
-  }
-})
+#TODO 2011,2012
+if(year %in% c(2000,2010,2013:2016)){
+    apply(states, 1, function(state) {
+      STUSPS <- state["STUSPS"]
+      name <- state["NAME"]
+    
+      filepathTrX <- paste0("tracts_", toString(year), "_", STUSPS, ".rds") %>%
+        file.path(filepathTr, .)
+    
+      if (!file.exists(filepathTrX)) {
+        tic(paste("Downloaded census tracts shape files for", year, name))
+    
+        tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
+        #harmonize data
+        if(year == 2000){
+          tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
+        }else if(year == 2010){
+          setnames(tracts, "GEO_ID", "AFFGEOID")
+        }
+        
+        saveRDS(tracts, filepathTrX)
+        toc()
+      }
+    })
+}  
 
 rm(filepathTr)

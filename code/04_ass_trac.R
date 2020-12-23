@@ -150,7 +150,7 @@ apply(states, 1, function(state) {
   
   tracts <- tracts %>%
     as.data.frame() %>%
-    select(c("COUNTYFP", "TRACT", "pm")) # TODO 
+    select(c("AFFGEOID", "pm"))  
 
   write.csv(tracts, exp_tracDirX, row.names = FALSE)
 })
