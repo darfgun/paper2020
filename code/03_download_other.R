@@ -76,8 +76,8 @@ rm(filenameExp, filepathExp, filepathM)
 filepathTr <- file.path(tracDir, toString(year))
 dir.create(filepathTr, recursive = T, showWarnings = F)
 
-#TODO 2011,2012
-if(year %in% c(2000,2010:2016)){
+
+if(year %in% c(2000:2016)){
     apply(states, 1, function(state) {
       STUSPS <- state["STUSPS"]
       name <- state["NAME"]
@@ -88,10 +88,14 @@ if(year %in% c(2000,2010:2016)){
       if (!file.exists(filepathTrX)) {
         tic(paste("Downloaded census tracts shape files for", year, name))
         
-        
         #harmonize data
         if(year == 2000){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
+          tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
+        }else if(year %in% 2001:2009){
+          #TODO
+          #for interpolated data shape files of 2000
+          tracts <- tracts(state = STUSPS, cb = TRUE, year = 2000)
           tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
         }else if(year == 2010){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)

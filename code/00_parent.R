@@ -139,6 +139,6 @@ for (year in years) {
    runscript(script=download.script, args = args)
    runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-  # runscript(script = cens_agr.script, args = args)
+   runscript(script = cens_agr.script, args = args)
   #runscript(script = paf.script, args = args)
 }

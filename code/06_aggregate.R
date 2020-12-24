@@ -1,7 +1,7 @@
 #-------------------Header------------------------------------------------
 # Author: Daniel Fridljand
 # Date: 11/15/2020
-# Purpose: aggregate by county
+# Purpose: aggregate 
 #
 #***************************************************************************
 #*
@@ -28,8 +28,8 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-year <- 2000
-agr_by <- "county"
+#year <- 2000
+#agr_by <- "county"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
 # exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
@@ -120,7 +120,7 @@ if (agr_by != "county") {
     cens_agrDirX <- paste0("cens_agr_", toString(year), "_", region, ".csv") %>%
       file.path(cens_agrDir, .)
 
-    if (!file.exists(cens_agrDirX)) { # TODO lÃ¶schen
+    if (!file.exists(cens_agrDirX)) { 
 
       tic(paste("Aggregated Census data", region, "in year", year, "by pm and", agr_by))
       statesX <- states[states[, agr_by] == region, "STUSPS"]
@@ -142,9 +142,9 @@ if (agr_by != "county") {
         inner_join(cens_agr) %>%
         mutate(prop = pop_size / totals)
 
-      if (any(is.na(cens_agr$prop))) {
-        glimpse(cens_agr$prop)
-      }
+      #if (any(is.na(cens_agr$prop))) { #TODO löschen
+      #  glimpse(cens_agr$prop)
+      #}
 
       # add region
       cens_agr[, agr_by] <- region
