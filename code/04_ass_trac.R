@@ -31,6 +31,20 @@ expDir <- args[4]
 tracDir <- args[5]
 exp_tracDir <- args[7]
 
+# TODO l?schen
+year <- 2016
+#agr_by <- "county"
+
+# tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
+# exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
+# censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
+# cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
+
+tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+expDir <- "C:/Users/Daniel/Desktop/paper2020/data/01_exposure"
+tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/02_tracts"
+exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+
 ## ---------------load data---------------
 
 # load exposure data
@@ -75,9 +89,11 @@ apply(states, 1, function(state) {
 
   tic(paste("Assigned pm exposure to each tract for year", toString(year), "in", name))
   # estimate pm exposure for each tract
-  tracts$pm <- sapply(tracts$geometry, function(tract) {
+  #tracts$pm <- sapply(tracts$geometry, function(tract) {
+  tracts$pm <- apply(tracts,1, function(tract) {
     # get enclosing box, make sure in range of exposure data
-    bbox <- st_bbox(tract)
+    geometry <-tract[["geometry"]]
+    bbox <- st_bbox(geometry)
     long_min <- bbox$xmin %>%
       max(., long_vec[1])
     lat_min <- bbox$ymin %>%
@@ -86,7 +102,11 @@ apply(states, 1, function(state) {
       min(., long_vec[length(long_vec)])
     lat_max <- bbox$ymax %>%
       min(., lat_vec[length(lat_vec)])
-
+    
+    if(is.na(bbox$xmin)){
+      glimpse( geometry)
+    }
+    
     # estimate corresponding grid in pm exposure data
     long_row_min <- -1 + ((long_min - long_vec[1]) / m_max_long) %>%
       floor()
@@ -96,7 +116,7 @@ apply(states, 1, function(state) {
       ceiling()
     lat_row_max <- 1 + ((lat_max - lat_vec[1]) / m_min_lat) %>%
       ceiling()
-
+    
     long_subset <- long_vec[long_row_min:long_row_max]
     lat_subset <- lat_vec[lat_row_min:lat_row_max]
     pm_subset <- exp_data[long_row_min:long_row_max, lat_row_min:lat_row_max]
@@ -109,19 +129,19 @@ apply(states, 1, function(state) {
     ) %>%
       st_as_sf(.,
         coords = c("lng", "lat"),
-        crs = st_crs(tract),
+        crs = st_crs(geometry),
         agr = "constant"
       )
 
     # subset points, which are inside of the tract
-    suppressMessages(points_in_tract <- points_subset[tract, , op = st_within])
+    suppressMessages(points_in_tract <- points_subset[geometry, , op = st_within])
 
     # if there are points inside of the tract, the tract is assigned the mean of pm of those points
     # if there are none, the pm of the closest point
     pm <- ifelse(nrow(points_in_tract) > 0,
       points_in_tract$pm %>%
         mean(., na.rm = TRUE),
-      tract %>%
+      geometry %>%
         suppressWarnings(st_centroid) %>%
         st_distance(x = points_subset, y = .) %>%
         which.min() %>%

@@ -85,7 +85,7 @@ dir.create(dem.dir, recursive = T, showWarnings = F)
 # directory for demographic data grouped by PM exposure and aggregated by county/hhs region/census region
 dem.agr.dir <- file.path(data.dir, "07_dem.agr")
 dir.create(dem.agr.dir, recursive = T, showWarnings = F)
-agr_by <- "county" # c("county","Census_Region","Census_division","hhs_region_number","state","nation")
+agr_by <- "nation" # c("county","Census_Region","Census_division","hhs_region_number","state","nation")
 
 paf.dir <- file.path(data.dir, "08_paf")
 dir.create(paf.dir, recursive = T, showWarnings = F)
@@ -120,12 +120,12 @@ years <- c(2016)
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
 for (year in years) {
-  runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, year))
+ # runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, year))
   
   args <- paste(
     year, # 1
     data.dir, # 2
-    tmp.dir, # 3
+    tmp.dir, # 3l
     exp.dir, # 4
     trac.dir, # 5
     exp.rr.dir, # 6
@@ -136,9 +136,9 @@ for (year in years) {
     paf.dir # 11
   ) 
 
-   runscript(script=download.script, args = args)
-   runscript(script=assignTract.script, args = args)
+  # runscript(script=download.script, args = args)
+  # runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-  # runscript(script = cens_agr.script, args = args)
+   runscript(script = cens_agr.script, args = args)
   #runscript(script = paf.script, args = args)
 }

@@ -101,9 +101,8 @@ if(year %in% c(2000:2016)){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
           setnames(tracts, "GEO_ID", "AFFGEOID")
         }else if(year %in% 2011:2016){
-          print("test")
           key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
-          
+          suppressMessages(
           tracts <- get_acs(geography = "tract", 
                             variables = "B19013_001", #dummy variable
                             state = STUSPS,  
@@ -111,11 +110,16 @@ if(year %in% c(2000:2016)){
                             geometry = TRUE,
                             keep_geo_vars = TRUE,
                             key = key)
-          print("test2")
+          )
+          
+          if(year %in% 2011:2012)
+            tracts$AFFGEOID <-paste0("1400000US",tracts$GEOID)
 
         }
         #save only relevant data
-        tracts<- tracts %>% select("AFFGEOID","geometry")
+        tracts<- tracts %>% 
+                  select("AFFGEOID","geometry") %>%
+                  filter(!is.na(AFFGEOID))
         
         saveRDS(tracts, filepathTrX)
         toc()
