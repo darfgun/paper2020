@@ -106,7 +106,7 @@ if(year %in% c(2000,2010:2016)){
 
         }
         #save only relevant data
-        tracts<- tracts %>% select(any_of("AFFGEOID","geometry"))
+        tracts<- tracts %>% select("AFFGEOID","geometry")
         
         saveRDS(tracts, filepathTrX)
         toc()
