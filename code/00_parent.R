@@ -136,9 +136,9 @@ for (year in years) {
     paf.dir # 11
   ) 
 
-   runscript(script=download.script, args = args)
-   runscript(script=assignTract.script, args = args)
+  # runscript(script=download.script, args = args)
+  # runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-   runscript(script = cens_agr.script, args = args)
+  # runscript(script = cens_agr.script, args = args)
   #runscript(script = paf.script, args = args)
 }

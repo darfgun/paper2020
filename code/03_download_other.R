@@ -87,7 +87,7 @@ if(year %in% c(2000,2010,2013:2016)){
     
       if (!file.exists(filepathTrX)) {
         tic(paste("Downloaded census tracts shape files for", year, name))
-    
+        
         tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
         #harmonize data
         if(year == 2000){

@@ -312,7 +312,7 @@ apply(states, 1, function(state) {
       ) 
       #create GEO_ID, if it does not exist yet
       if(!"GEO_ID" %in% colnames(data)){
-        tracts$GEO_ID <-paste0("1400000US",tracts$state,tracts$county,tracts$tract)
+        data$GEO_ID <-paste0("1400000US",data$state,data$county,data$tract)
       }
       
       data<- data%>%
@@ -335,6 +335,7 @@ apply(states, 1, function(state) {
     dem.state.data <- dem.state.dir %>% read.csv()
     
     #make wider
+    #TODO other option?
     dem.state.data <- dem.state.data %>%
       group_by(variable) %>%
       mutate(row = row_number()) %>%
