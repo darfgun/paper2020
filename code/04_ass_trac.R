@@ -32,7 +32,7 @@ tracDir <- args[5]
 exp_tracDir <- args[7]
 
 # TODO l?schen
-year <- 2016
+# year <- 2016
 #agr_by <- "county"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
@@ -40,10 +40,10 @@ year <- 2016
 # censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
 # cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
 
-tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-expDir <- "C:/Users/Daniel/Desktop/paper2020/data/01_exposure"
-tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/02_tracts"
-exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+#tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+#expDir <- "C:/Users/Daniel/Desktop/paper2020/data/01_exposure"
+#tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/02_tracts"
+#exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
 
 ## ---------------load data---------------
 
