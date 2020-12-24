@@ -23,7 +23,7 @@ for (p in packages) {
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
 tmpDir <- args[3]
-exp_rrDir <- args[7]
+exp_rrDir <- args[6]
 
 plotsDir <- file.path(exp_rrDir, "plots")
 dir.create(plotsDir, recursive = T, showWarnings = F)
@@ -101,6 +101,7 @@ apply(causes_ages, 1, function(cause_age) {
       1,
       getMRBRT(pm) / tmrelMRBR
     ) %>%
+      as.numeric %>%
       return(.)
   }
 
@@ -125,7 +126,7 @@ apply(causes_ages, 1, function(cause_age) {
   plotDirX <- paste0(label_cause, "_", age_group_id, ".png") %>%
     file.path(plotsDir, .)
 
-  if (!file.exists(plotDirX)) {
+  if (FALSE && !file.exists(plotDirX)) {
     ggplot(data = exp_rr, aes(x = exposure_spline, y = rr)) +
       geom_point() +
       xlab("Exposure") +

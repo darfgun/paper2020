@@ -10,7 +10,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("acs","dplyr", "RCurl", "magrittr", "tigris","tidycensus", "stringr", "data.table", "tidyverse", "tictoc","rhdf5") #
+packages <- c("dplyr", "RCurl", "magrittr", "tigris", "stringr", "data.table", "tidyverse", "tictoc","rhdf5") #
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -95,31 +95,40 @@ if(year %in% c(2000:2016)){
         }else if(year %in% 2001:2009){
           #TODO
           #for interpolated data shape files of 2000
-          tracts <- tracts(state = STUSPS, cb = TRUE, year = 2000)
-          tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
+          #tracts <- tracts(state = STUSPS, cb = TRUE, year = 2000)
+          #tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
         }else if(year == 2010){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
           setnames(tracts, "GEO_ID", "AFFGEOID")
-        }else if(year %in% 2011:2016){
-          key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
-          suppressMessages(
-          tracts <- get_acs(geography = "tract", 
-                            variables = "B19013_001", #dummy variable
-                            state = STUSPS,  
-                            year = as.numeric(year),
-                            geometry = TRUE,
-                            keep_geo_vars = TRUE,
-                            key = key)
-          )
-          
-          if(year %in% 2011:2012)
-            tracts$AFFGEOID <-paste0("1400000US",tracts$GEOID)
-
+        }else if(year %in% 2011:2012){
+          tracts <- tracts(state = STUSPS, cb = FALSE, year = year)
+          tracts$AFFGEOID <-paste0("1400000US",tracts$GEOID)
+        }else if(year %in% 2013:2016){
+          tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
         }
+          
+        #TODO löschen
+        #else if(year %in% 2011:2016){
+        #  key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
+        #  suppressMessages(
+        #  tracts <- get_acs(geography = "tract", 
+        #                    variables = "B19013_001", #dummy variable
+        #                    state = STUSPS,  
+        #                    year = as.numeric(year),
+        #                    geometry = TRUE,
+        #                    keep_geo_vars = TRUE,
+        #                    key = key)
+        #  )
+          
+         # if(year %in% 2011:2012)
+        #    tracts$AFFGEOID <-paste0("1400000US",tracts$GEOID)
+
+        
         #save only relevant data
         tracts<- tracts %>% 
-                  select("AFFGEOID","geometry") %>%
-                  filter(!is.na(AFFGEOID))
+                  select("AFFGEOID","geometry") #%>% #TODO
+                  #filter(!is.na(AFFGEOID)) #some are entirely in water, e.g. tract 01003990000 => ignore those
+        #TODO
         
         saveRDS(tracts, filepathTrX)
         toc()

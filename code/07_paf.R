@@ -24,20 +24,20 @@ args <- commandArgs(trailingOnly = T)
 
 year <- args[1]
 tmpDir <- args[3]
-exp_rrDir <- args[7]
+exp_rrDir <- args[6]
 censDir <- args[8]
 cens_agrDir <- args[9]
 agr_by <- args[10]
 pafDir <- args[11]
 
 # TODO löschen
-year <- 2000
-tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-exp_rrDir <- "/Users/default/Desktop/own_code2/data/04_exp_rr"
-censDir <- "/Users/default/Desktop/own_code2/data/06_census"
-cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_census_agr"
-agr_by <- "Census_Region"
-pafDir <- "/Users/default/Desktop/own_code2/data/08_paf"
+#year <- 2000
+#tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
+#exp_rrDir <- "/Users/default/Desktop/own_code2/data/04_exp_rr"
+#censDir <- "/Users/default/Desktop/own_code2/data/06_census"
+#cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_census_agr"
+#agr_by <- "Census_Region"
+#pafDir <- "/Users/default/Desktop/own_code2/data/08_paf"
 
 # create directories
 cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
@@ -90,7 +90,7 @@ for (region in regions) {
       pafs <- apply(censMeta, 1, function(variableX) {
         cens_agr_sub <- cens_agr %>% filter(variable == variableX)
 
-        rr <- sapply(cens_agr_sub$pm, getRR) # TODO last pm
+        rr <- sapply(cens_agr_sub$pm, getRR) %>% as.numeric 
         props <- cens_agr_sub$prop
         x <- sum(props*(rr-1)) # TODO umbennen
         x / (1 + x)
