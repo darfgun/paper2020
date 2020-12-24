@@ -2,7 +2,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc","tigris", "sf")
+packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc","tigris", "sf","acs")
 
 for (p in packages) {
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
@@ -10,7 +10,7 @@ for (p in packages) {
 }
 
 #TODO l?schen
-year <- 2000
+year <- 2016
 agr_by <- "county"
 
 #tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
@@ -25,14 +25,16 @@ agr_by <- "county"
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 
-reshape(trac_cens_expData, 
-        direction = "long",
-        varying = list(names(d)[3:7]),
-        v.names = "Value",
-        idvar = c("Code", "Country"),
-        timevar = "Year",
-        times = 1950:1954)
+library(tidycensus)
+library(tidyverse)
+library(viridis)
+library(acs)
+key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
+census_api_key(key)
 
-long <- melt(setDT(trac_cens_expData), 
-             id.vars = c("state", "county", "tract", "AFFGEOID", "pm"),
-             variable.name = "pop_size")
+tracts <- get_acs(geography = "tract", 
+                  variables = "B19013_001", #dummy variable
+                state = "TX",  
+                year = year,
+                geometry = TRUE,
+                keep_geo_vars = TRUE)
