@@ -101,12 +101,17 @@ if(year %in% c(2000:2016)){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
           setnames(tracts, "GEO_ID", "AFFGEOID")
         }else if(year %in% 2011:2016){
+          print("test")
+          key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
+          
           tracts <- get_acs(geography = "tract", 
                             variables = "B19013_001", #dummy variable
                             state = STUSPS,  
-                            year = year,
+                            year = as.numeric(year),
                             geometry = TRUE,
-                            keep_geo_vars = TRUE)
+                            keep_geo_vars = TRUE,
+                            key = key)
+          print("test2")
 
         }
         #save only relevant data
