@@ -32,7 +32,7 @@ tracDir <- args[5]
 exp_tracDir <- args[7]
 
 # TODO l?schen
-year <- 2016
+# year <- 2016
 #agr_by <- "county"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
