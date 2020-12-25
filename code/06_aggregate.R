@@ -103,7 +103,9 @@ apply(states, 1, function(state) {
       ) %>%
       group_by(state, county, variable, pm) %>%
       summarise(pop_size = sum(value)) %>%
-      filter(pop_size != 0)%>%
+      filter(pop_size != 0)
+    
+    cens_agr <- cens_agr  %>%
       group_by(state, county, variable) %>%
       summarise(totals = sum(pop_size)) %>%
       filter(totals != 0)  %>%
