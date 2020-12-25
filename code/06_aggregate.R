@@ -15,7 +15,7 @@ packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc")
 for (p in packages) {
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
-
+options(dplyr.summarise.inform = FALSE)
 
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
@@ -153,3 +153,4 @@ if (agr_by != "county") {
     }
   }
 }
+""

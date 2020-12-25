@@ -10,7 +10,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc", "MALDIquant")
+packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc","testthat", "MALDIquant")
 
 for (p in packages) {
   if (p %in% rownames(installed.packages()) == FALSE) {
@@ -92,6 +92,9 @@ for (region in regions) {
 
         rr <- sapply(cens_agr_sub$pm, getRR) %>% as.numeric 
         props <- cens_agr_sub$prop
+        
+        expect_identical(sum(props), 1)
+        
         x <- sum(props*(rr-1)) # TODO umbennen
         x / (1 + x)
       })
@@ -111,3 +114,4 @@ for (region in regions) {
     toc()
   }
 }
+""
