@@ -61,40 +61,30 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv()
 apply(states, 1, function(state) {
   STUSPS <- state[["STUSPS"]] 
   name <- state[["NAME"]]
-
+  
   cens_agrDirCX <- paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
     file.path(cens_agrDirC, .)
-
+  
   if (!file.exists(cens_agrDirCX)) {
-    tic(paste("Aggregated Census data in", name, "in year", year, "by pm and", agr_by))
+    tic(paste("Aggregated Census data in", name, "in year", year, "by pm and county"))
     trac_censData <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(censDir, year, .)%>%
       read.csv %>%
-      
       setnames("GEO_ID", "AFFGEOID") %>%
-      #TODO löschen
-      #filter out tracts, where no one is living
-      #group_by(AFFGEOID) %>%
-      #summarise(anyOneLiving = sum(pop_size))%>%
-      #filter(anyOneLiving != 0) %>%
-      #mutate(anyOneLiving = NULL)%>%
-      #ungroup %>%
-      #as.data.frame%>%
-      
       pivot_wider(
         names_from = variable,
         values_from = pop_size
       ) 
-
+    
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
       read.csv()
-
+    
     if (nrow(exp_tracData) != nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
-
+    
     cens_agr <- left_join(trac_censData,
-      exp_tracData,
-      by = "AFFGEOID"
+                          exp_tracData,
+                          by = "AFFGEOID"
     )  %>%
       setDT() %>%
       melt(
@@ -116,7 +106,7 @@ apply(states, 1, function(state) {
     #  group_by(state, county, variable) %>%
     #  summarise(sum_prop = sum(prop))
     #glimpse(cens_agr2$sum_prop)
-     
+    
     write.csv(cens_agr, cens_agrDirCX)
     toc()
   }
@@ -127,14 +117,14 @@ if (agr_by != "county") {
   regions <- states[, agr_by] %>% unique
   
   for (region in regions) {
+    
     cens_agrDirX <- paste0("cens_agr_", toString(year), "_", region, ".csv") %>%
       file.path(cens_agrDir, .)
-
+    
     if (!file.exists(cens_agrDirX)) { 
-
-      tic(paste("Aggregated Census data", region, "in year", year, "by pm and", agr_by))
+      tic(paste("Aggregated Census data in",agr_by, region, "in year", year, "by pm"))
       statesX <- states[states[, agr_by] == region, "STUSPS"]
-
+      
       cens_agr <- lapply(statesX, function(STUSPS) {
         paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
           file.path(cens_agrDirC, .) %>%
@@ -144,22 +134,18 @@ if (agr_by != "county") {
         as.data.frame() %>%
         group_by(variable, pm) %>%
         summarise(pop_size = sum(pop_size))
-
+      
       # add proportions
       cens_agr <- cens_agr %>%
         group_by(variable) %>%
         summarise(totals = sum(pop_size)) %>%
-        filter(totals != 0)
+        #filter(totals != 0) %>%
         inner_join(cens_agr) %>%
         mutate(prop = pop_size / totals)
-
-      #if (any(is.na(cens_agr$prop))) { #TODO löschen
-      #  glimpse(cens_agr$prop)
-      #}
-
+      
       # add region
       cens_agr[, agr_by] <- region
-
+      
       # select relevant
       cens_agr <- cens_agr %>% select(agr_by, variable, pm, prop)
       write.csv(cens_agr, cens_agrDirX)
