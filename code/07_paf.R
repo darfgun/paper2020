@@ -93,7 +93,9 @@ for (region in regions) {
         rr <- sapply(cens_agr_sub$pm, getRR) %>% as.numeric 
         props <- cens_agr_sub$prop
         
-        expect_identical(sum(props), 1)
+        test_that("07_paf", {
+          expect_equal(sum(props), 1)
+        })
         
         x <- sum(props*(rr-1)) # TODO umbennen
         x / (1 + x)

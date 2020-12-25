@@ -10,7 +10,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc")
+packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc")
 
 for (p in packages) {
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
@@ -101,11 +101,18 @@ apply(states, 1, function(state) {
       filter(totals != 0)  %>%
       inner_join(cens_agr) %>%
       mutate(prop = pop_size / totals)
-    # TODO test, delete
-    # cens_agr2 <- cens_agr %>%
-    #  group_by(state, county, variable) %>%
-    #  summarise(sum_prop = sum(prop))
-    #glimpse(cens_agr2$sum_prop)
+    
+    
+    #test, check 
+    sum_props <- cens_agr %>%
+      group_by(state, county, variable) %>%
+      summarise(sum_prop = sum(prop))
+    
+    sapply(sum_props, function(sum_prop){
+      test_that("06_aggregate county", {
+        expect_equal(sum_prop, 1)
+      })
+    })
     
     write.csv(cens_agr, cens_agrDirCX)
     toc()
@@ -142,6 +149,17 @@ if (agr_by != "county") {
         #filter(totals != 0) %>%
         inner_join(cens_agr) %>%
         mutate(prop = pop_size / totals)
+      
+      #test, check 
+      sum_props <- cens_agr %>%
+        group_by(state, county, variable) %>%
+        summarise(sum_prop = sum(prop))
+      
+      sapply(sum_props, function(sum_prop){
+        test_that("06_aggregate agr_by", {
+          expect_equal(sum_prop, 1)
+        })
+      })
       
       # add region
       cens_agr[, agr_by] <- region
