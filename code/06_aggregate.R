@@ -112,10 +112,11 @@ apply(states, 1, function(state) {
       inner_join(cens_agr) %>%
       mutate(prop = pop_size / totals)
     # TODO test, delete
-     #cens_agr2 <- cens_agr %>%
+    # cens_agr2 <- cens_agr %>%
     #  group_by(state, county, variable) %>%
     #  summarise(sum_prop = sum(prop))
-
+    #glimpse(cens_agr2$sum_prop)
+     
     write.csv(cens_agr, cens_agrDirCX)
     toc()
   }
