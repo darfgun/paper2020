@@ -28,7 +28,7 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-#year <- 2016
+#year <- 2012
 #agr_by <- "county"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
@@ -85,53 +85,34 @@ apply(states, 1, function(state) {
         names_from = variable,
         values_from = pop_size
       ) 
-    
 
     exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(exp_tracDir, year, .) %>%
       read.csv()
-    
-    if(anyNA.data.frame(exp_tracData))
-      browser()
-    if(anyNA(exp_tracData$pm))
-      browser()
 
     if (nrow(exp_tracData) != nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
 
     cens_agr <- left_join(trac_censData,
       exp_tracData,
       by = "AFFGEOID"
-    ) %>%
+    )  %>%
       setDT() %>%
       melt(
         id.vars = c("state", "county", "tract", "AFFGEOID", "pm"),
         variable.name = "variable"
       ) %>%
       group_by(state, county, variable, pm) %>%
-      summarise(pop_size = sum(value))
-    
-    if(anyNA.data.frame(exp_tracData))
-      browser()
-    if(anyNA(cens_agr$pm))
-      browser()
-    
-    # add proportions
-    cens_agr <- cens_agr %>%
+      summarise(pop_size = sum(value)) %>%
+      filter(pop_size != 0)%>%
       group_by(state, county, variable) %>%
       summarise(totals = sum(pop_size)) %>%
       filter(totals != 0)  %>%
       inner_join(cens_agr) %>%
       mutate(prop = pop_size / totals)
-    
-    if(anyNA.data.frame(exp_tracData))
-      browser()
-    if(anyNA(cens_agr$pm))
-      browser()
-    
     # TODO test, delete
-     cens_agr2 <- cens_agr %>%
-      group_by(state, county, variable) %>%
-      summarise(sum_prop = sum(prop))
+     #cens_agr2 <- cens_agr %>%
+    #  group_by(state, county, variable) %>%
+    #  summarise(sum_prop = sum(prop))
 
     write.csv(cens_agr, cens_agrDirCX)
     toc()
