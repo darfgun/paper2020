@@ -75,7 +75,7 @@ for (region in regions) {
         paste0(label_cause, "_", age_group_idX, ".csv")
       ) %>%
         file.path(exp_rrDir, .) %>%
-        read.csv()
+        read.csv
 
       getRR <- function(pm) {
         match.closest(pm, exp_rr$exposure_spline) %>%
