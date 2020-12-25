@@ -86,28 +86,37 @@ for (region in regions) {
       if (age_group_idX != "all ages") {
         censMeta <- censMeta %>% filter(age_group_id == as.numeric(age_group_idX))
       }
-
+      
+      #TODO same thing via group by
       pafs <- apply(censMeta, 1, function(variableX) {
         cens_agr_sub <- cens_agr %>% filter(variable == variableX)
 
         rr <- sapply(cens_agr_sub$pm, getRR) %>% as.numeric 
         props <- cens_agr_sub$prop
         
-        test_that("07_paf", {
-          expect_equal(sum(props), 1)
-        })
         
         x <- sum(props*(rr-1)) # TODO umbennen
-        x / (1 + x)
+        y<-x / (1 + x)
+        test_that("07_paf sum(props)", {
+          expect_equal(sum(props), 1)
+          #TODO expect_lt(y, 1) smaller
+        })
+        return(y)
       })
 
       toc()
 
-      data.frame(
+      result<-data.frame(
         label_cause = rep(label_cause, nrow(censMeta)),
         censMeta$variable,
         pafs
       )
+      
+      test_that("07_paf sum(props)", {
+        expect_equal(any(is.na(result)), FALSE)
+      })
+      
+      return(result)
     }) %>% do.call(rbind, .)
 
     pafs[, agr_by] <- region

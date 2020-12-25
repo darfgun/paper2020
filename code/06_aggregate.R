@@ -13,9 +13,10 @@ rm(list = ls(all = TRUE))
 packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc")
 
 for (p in packages) {
-  suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
+  suppressWarnings(library(p, character.only = T, warn.conflicts = FALSE, quietly = TRUE))
 }
 options(dplyr.summarise.inform = FALSE)
+options(dplyr.join.inform = FALSE)
 
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
@@ -99,19 +100,18 @@ apply(states, 1, function(state) {
       group_by(state, county, variable) %>%
       summarise(totals = sum(pop_size)) %>%
       filter(totals != 0)  %>%
-      inner_join(cens_agr) %>%
+      inner_join(cens_agr, by = c("state", "county", "variable")) %>%
       mutate(prop = pop_size / totals)
     
-    
     #test, check 
-    sum_props <- cens_agr %>%
-      group_by(state, county, variable) %>%
-      summarise(sum_prop = sum(prop))
-    
-    sapply(sum_props, function(sum_prop){
-      test_that("06_aggregate county", {
-        expect_equal(sum_prop, 1)
-      })
+    test_that("06_aggregate county", {
+      cens_agr %>%
+        group_by(state, county, variable) %>%
+        summarise(sum_prop = sum(prop)) %>%
+        apply(1,function(row){
+          expect_equal(1,row[["sum_prop"]] %>% as.numeric)
+        })
+      expect_equal(any(is.na(cens_agr)), FALSE)
     })
     
     write.csv(cens_agr, cens_agrDirCX)
@@ -146,19 +146,18 @@ if (agr_by != "county") {
       cens_agr <- cens_agr %>%
         group_by(variable) %>%
         summarise(totals = sum(pop_size)) %>%
-        #filter(totals != 0) %>%
-        inner_join(cens_agr) %>%
+        inner_join(cens_agr, by = "variable") %>%
         mutate(prop = pop_size / totals)
       
       #test, check 
-      sum_props <- cens_agr %>%
-        group_by(state, county, variable) %>%
-        summarise(sum_prop = sum(prop))
-      
-      sapply(sum_props, function(sum_prop){
-        test_that("06_aggregate agr_by", {
-          expect_equal(sum_prop, 1)
-        })
+      test_that("06_aggregate agr_by", {
+        cens_agr %>%
+          group_by(variable) %>%
+          summarise(sum_prop = sum(prop)) %>%
+          apply(1,function(row){
+            expect_equal(1,row[["sum_prop"]] %>% as.numeric)
+          })
+        expect_equal(any(is.na(cens_agr)), FALSE)
       })
       
       # add region
