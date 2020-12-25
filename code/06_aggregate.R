@@ -146,8 +146,8 @@ if (agr_by != "county") {
       # add region
       cens_agr[, agr_by] <- region
       
-      # select relevant
-      cens_agr <- cens_agr %>% select(agr_by, variable, pm, prop)
+      # select relevant 
+      cens_agr <- cens_agr %>% select(all_of(agr_by), variable, pm, prop)
       write.csv(cens_agr, cens_agrDirX)
       toc()
     }
