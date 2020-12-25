@@ -151,6 +151,26 @@ if (agr_by != "county") {
       write.csv(cens_agr, cens_agrDirX)
       toc()
     }
+    
+    if(TRUE){
+      census_meta <-  file.path(censDir,"meta", paste0("cens_meta_", toString(year), ".csv")) %>% read.csv
+      
+      cens_agr_plotDir <- paste0("cens_agr_", toString(year), "_", region, ".png") %>%
+        file.path(cens_agrDir, .)
+      if (!file.exists(cens_agr_plotDir)) { 
+        tic(paste("Plotted aggregated Census data in",agr_by, region, "in year", year, "by pm"))
+        cens_agr <- cens_agrDirX %>% 
+                      read.csv %>%
+                      left_join(.,census_meta, by = "variable")
+        
+        
+        #TODO
+        toc()
+      }
+      
+    }
   }
 }
+
+
 ""
