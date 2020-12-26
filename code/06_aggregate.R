@@ -182,8 +182,20 @@ if (agr_by != "county") {
                       summarise(pop_size = sum(pop_size))
         
         for(his_or in unique(cens_agr$hispanic_origin)){
-          #totals
+          cens_agr_his <- cens_agr %>% filter(hispanic_origin == his_or)
           
+          #totals
+          # Plot
+          cens_agr_his %>%
+            ggplot( aes(x=pm, y=pop_size, group=race, color=race)) +
+            geom_line() +
+            scale_color_viridis(discrete = TRUE) +
+            ggtitle("Popularity of American names in the previous 30 years") +
+            theme_ipsum() +
+            ylab("Number of persons exposed")+
+            xlab("particulate matter (pm)")
+
+          ggsave(file.path(cens_agr_plotDir,paste0(his_or,"_total.png")))
         }
         #TODO
         toc()
