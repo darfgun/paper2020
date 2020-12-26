@@ -14,7 +14,7 @@ rm(list = ls(all = TRUE))
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
              "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat", "tictoc", 
-             "tidyverse","tigris","tmap")
+             "tidyverse","tigris","tmap","viridis")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
