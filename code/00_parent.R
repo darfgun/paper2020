@@ -110,7 +110,7 @@ years <- c(2010)
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
 for (year in years) {
-  # runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, year))
+   runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, year))
   
   args <- paste(
     year, # 1
@@ -128,7 +128,7 @@ for (year in years) {
 
   # runscript(script=download.script, args = args)
   # runscript(script=assignTract.script, args = args)
-  # runscript(script=mrbrtRR.script, args = args)
+   runscript(script=mrbrtRR.script, args = args)
    runscript(script = cens_agr.script, args = args)
   # runscript(script = paf.script, args = args)
 }
