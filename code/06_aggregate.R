@@ -190,7 +190,7 @@ if (agr_by != "county") {
             ggplot( aes(x=pm, y=pop_size, group=race, color=race)) +
             geom_line() +
             scale_color_viridis(discrete = TRUE) +
-            ggtitle("Popularity of American names in the previous 30 years") +
+            ggtitle(paste("hispanic origin:",his_or)) +
             theme_ipsum() +
             ylab("Number of persons exposed")+
             xlab("particulate matter (pm)")
