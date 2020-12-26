@@ -102,7 +102,7 @@ paf.script <- file.path(code.dir, "07_paf.R")
 
 
 #--------parameters of code-------------------
-years <- c(2000,2010:2016)
+years <- c(2010)
 
 
 # runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, 2000))

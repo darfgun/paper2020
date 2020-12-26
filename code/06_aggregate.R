@@ -166,12 +166,11 @@ if (agr_by != "county") {
       write.csv(cens_agr, cens_agrDirX)
       toc()
     }
-    
+#---- Plot    
     if(TRUE){
       census_meta <-  file.path(censDir,"meta", paste0("cens_meta_", toString(year), ".csv")) %>% read.csv
       
-      cens_agr_plotDir <- paste0("cens_agr_", toString(year), "_", region) %>%
-        file.path(cens_agrDir, .)
+      cens_agr_plotDir <- file.path(cens_agrDir, "plots")
       if (!file.exists(cens_agr_plotDir)) { 
         tic(paste("Plotted aggregated Census data in",agr_by, region, "in year", year, "by pm"))
         dir.create(cens_agr_plotDir, recursive = TRUE)
@@ -185,17 +184,55 @@ if (agr_by != "county") {
           cens_agr_his <- cens_agr %>% filter(hispanic_origin == his_or)
           
           #totals
-          # Plot
-          cens_agr_his %>%
-            ggplot( aes(x=pm, y=pop_size, group=race, color=race)) +
-            geom_line() +
+          g<-cens_agr_his %>%
+            ggplot(aes(x=pm, y=pop_size, group=race, color=race)) +
             scale_color_viridis(discrete = TRUE) +
             ggtitle(paste("hispanic origin:",his_or)) +
             theme_ipsum() +
             ylab("Number of persons exposed")+
-            xlab("particulate matter (pm)")
+            xlab("particulate matter (pm)")+
+            ylim(0,NA)
+          
+          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_total.png")),
+                 plot = g +geom_line())
 
-          ggsave(file.path(cens_agr_plotDir,paste0(his_or,"_total.png")))
+          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_total_smooth.png")),
+                 plot = g +geom_smooth(method = "loess",se=TRUE, fullrange=FALSE, level=0.9))
+          
+          #scale down/proportion
+          # proportions
+          cens_agr_his <- cens_agr_his %>%
+            group_by(race) %>%
+            summarise(totals = sum(pop_size)) %>%
+            inner_join(cens_agr_his, by = "race") %>%
+            mutate(prop = pop_size / totals)
+          
+          test_that("06_aggregate plot race", {
+            cens_agr_his %>%
+              group_by(race) %>%
+              summarise(sum_prop = sum(prop)) %>%
+              apply(1,function(row){
+                expect_equal(1,row[["sum_prop"]] %>% as.numeric)
+              })
+            expect_equal(any(is.na(cens_agr_his)), FALSE)
+          })
+          
+          #totals
+          g<-cens_agr_his %>%
+            ggplot(aes(x=pm, y=prop, group=race, color=race)) +
+            scale_color_viridis(discrete = TRUE) +
+            ggtitle(paste("hispanic origin:",his_or)) +
+            theme_ipsum() +
+            ylab("Proportion of persons exposed")+
+            xlab("particulate matter (pm)")+
+            ylim(0,NA)
+          
+          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_prop.png")),
+                 plot = g +geom_line())
+          
+          #TODO kernel density estimation instead
+          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_prop_smooth.png")),
+                 plot = g +geom_smooth(method = "loess",se=TRUE, fullrange=FALSE, level=0.9))
         }
         #TODO
         toc()

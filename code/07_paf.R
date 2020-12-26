@@ -10,7 +10,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc","testthat", "MALDIquant")
+packages <- c("dplyr", "magrittr", "data.table", "tidyverse", "tictoc","testthat", "MALDIquant","ggplot2")
 
 for (p in packages) {
   if (p %in% rownames(installed.packages()) == FALSE) {
