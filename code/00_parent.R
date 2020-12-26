@@ -99,20 +99,10 @@ mrbrtRR.script <- file.path(code.dir, "05_mrbrt_rr.R")
 cens_agr.script <- file.path(code.dir, "06_aggregate.R")
 paf.script <- file.path(code.dir, "07_paf.R")
 
-# load packages, install if missing
-packages <- c()
-
-for (p in packages) {
-  if (p %in% rownames(installed.packages()) == FALSE) {
-    install.packages(p)
-  }
-  library(p, character.only = T)
-}
-
 
 
 #--------parameters of code-------------------
-years <- c(2012)
+years <- c(2000,2010:2016)
 
 
 # runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, 2000))
@@ -139,6 +129,6 @@ for (year in years) {
   # runscript(script=download.script, args = args)
   # runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-   runscript(script = cens_agr.script, args = args)
-  # runscript(script = paf.script, args = args)
+  # runscript(script = cens_agr.script, args = args)
+   runscript(script = paf.script, args = args)
 }
