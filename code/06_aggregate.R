@@ -29,18 +29,18 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-#year <- 2012
-#agr_by <- "county"
+year <- 2012
+agr_by <- "nation"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
 # exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
 # censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
 # cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
 
-#tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-#exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
-#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
-#cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
+tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 
 if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_number", "state", "nation")) {
   print(paste(agr_by, "is an invalid agr_by argument"))
@@ -163,8 +163,6 @@ if (agr_by != "county") {
       # add region
       cens_agr[, agr_by] <- region
       
-      # select relevant 
-      cens_agr <- cens_agr %>% select(all_of(agr_by), variable, pm, prop)
       write.csv(cens_agr, cens_agrDirX)
       toc()
     }
@@ -172,15 +170,21 @@ if (agr_by != "county") {
     if(TRUE){
       census_meta <-  file.path(censDir,"meta", paste0("cens_meta_", toString(year), ".csv")) %>% read.csv
       
-      cens_agr_plotDir <- paste0("cens_agr_", toString(year), "_", region, ".png") %>%
+      cens_agr_plotDir <- paste0("cens_agr_", toString(year), "_", region) %>%
         file.path(cens_agrDir, .)
       if (!file.exists(cens_agr_plotDir)) { 
         tic(paste("Plotted aggregated Census data in",agr_by, region, "in year", year, "by pm"))
+        dir.create(cens_agr_plotDir, recursive = TRUE)
         cens_agr <- cens_agrDirX %>% 
                       read.csv %>%
-                      left_join(.,census_meta, by = "variable")
+                      left_join(.,census_meta, by = "variable") %>%
+                      group_by(race,hispanic_origin, pm) %>%
+                      summarise(pop_size = sum(pop_size))
         
-        
+        for(his_or in unique(cens_agr$hispanic_origin)){
+          #totals
+          
+        }
         #TODO
         toc()
       }

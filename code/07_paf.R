@@ -31,8 +31,8 @@ agr_by <- args[10]
 pafDir <- args[11]
 
 # TODO löschen
-year <- 2000
-agr_by <- "nation"
+#year <- 2000
+#agr_by <- "nation"
 
 #tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
 #exp_rrDir <- "/Users/default/Desktop/own_code2/data/04_exp_rr"
@@ -40,11 +40,11 @@ agr_by <- "nation"
 #cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_census_agr"
 #pafDir <- "/Users/default/Desktop/own_code2/data/08_paf"
 
-tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-exp_rrDir <- "C:/Users/Daniel/Desktop/paper2020/data/04_exp_rr"
-censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
-cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
-pafDir <- "C:/Users/Daniel/Desktop/paper2020/data/08_paf"
+#tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+#exp_rrDir <- "C:/Users/Daniel/Desktop/paper2020/data/04_exp_rr"
+#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+#cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
+#pafDir <- "C:/Users/Daniel/Desktop/paper2020/data/08_paf"
 
 # create directories
 cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
