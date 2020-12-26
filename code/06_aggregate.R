@@ -10,7 +10,7 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc")
+packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc","viridis")
 
 for (p in packages) {
   suppressWarnings(library(p, character.only = T, warn.conflicts = FALSE, quietly = TRUE))
@@ -29,18 +29,18 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-year <- 2012
-agr_by <- "nation"
+#year <- 2012
+#agr_by <- "nation"
 
 # tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
 # exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
 # censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
 # cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
 
-tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
-censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
-cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
+#tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+#exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
+#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+#cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 
 if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_number", "state", "nation")) {
   print(paste(agr_by, "is an invalid agr_by argument"))
