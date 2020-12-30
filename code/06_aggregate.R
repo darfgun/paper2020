@@ -57,17 +57,21 @@ dir.create(cens_agrDir, recursive = T, showWarnings = F)
 states <- file.path(tmpDir, "states.csv") %>% read.csv()
 
 
-## ----
+## ---- calculate county-------
 
+#calculate first on county level, even if agr_by != "county"
+#loop over all states
 apply(states, 1, function(state) {
   STUSPS <- state[["STUSPS"]] 
   name <- state[["NAME"]]
   
-  cens_agrDirCX <- paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
-    file.path(cens_agrDirC, .)
+  cens_agrDirCX <- file.path(cens_agrDirC,paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") )
   
+  #if not calculated for this state yet
   if (!file.exists(cens_agrDirCX)) {
     tic(paste("Aggregated Census data in", name, "in year", year, "by pm and county"))
+    
+    #read demographic census data by tract, make data wider
     trac_censData <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(censDir, year, .)%>%
       read.csv %>%
@@ -77,30 +81,36 @@ apply(states, 1, function(state) {
         values_from = pop_size
       ) 
     
-    exp_tracData <- paste0("exp_trac_", toString(year), "_", STUSPS, ".csv") %>%
-      file.path(exp_tracDir, year, .) %>%
-      read.csv()
+    #read pm exposure data by tract
+    exp_tracData <- file.path(exp_tracDir, year, paste0("exp_trac_", toString(year), "_", STUSPS, ".csv")) %>%
+      read.csv
     
     if (nrow(exp_tracData) != nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
     
+    #join above datasets
     cens_agr <- left_join(trac_censData,
                           exp_tracData,
                           by = "AFFGEOID"
     )  %>%
       setDT() %>%
+      #make long again
       melt(
         id.vars = c("state", "county", "tract", "AFFGEOID", "pm"),
         variable.name = "variable"
       ) %>%
       group_by(state, county, variable, pm) %>%
+      #calculate number of persons of exposed to particulare level of exposure,
+      #in particulare county by sex, age group, ethinicity, hispanic origin
       summarise(pop_size = sum(value)) %>%
       filter(pop_size != 0)
     
     cens_agr <- cens_agr  %>%
       group_by(state, county, variable) %>%
+      #calculate marginal sum regardsless of exposure
       summarise(totals = sum(pop_size)) %>%
       filter(totals != 0)  %>%
       inner_join(cens_agr, by = c("state", "county", "variable")) %>%
+      #calculate proportion this way
       mutate(prop = pop_size / totals)
     
     #test, check 
@@ -119,7 +129,9 @@ apply(states, 1, function(state) {
   }
 })
 
-##--- different procedure if not county level
+##------ calculate not county -----
+# if agr_by != "county", aggregate data from above according to agr_by
+
 if (agr_by != "county") {
   regions <- states[, agr_by] %>% unique
   
@@ -132,6 +144,7 @@ if (agr_by != "county") {
       tic(paste("Aggregated Census data in",agr_by, region, "in year", year, "by pm"))
       statesX <- states[states[, agr_by] == region, "STUSPS"]
       
+      #rbind all states from this region
       cens_agr <- lapply(statesX, function(STUSPS) {
         paste0("cens_agr_", toString(year), "_", STUSPS, ".csv") %>%
           file.path(cens_agrDirC, .) %>%
@@ -166,7 +179,7 @@ if (agr_by != "county") {
       write.csv(cens_agr, cens_agrDirX)
       toc()
     }
-#---- Plot    
+#---- -----Plot-----------    
     if(TRUE){
       census_meta <-  file.path(censDir,"meta", paste0("cens_meta_", toString(year), ".csv")) %>% read.csv
       
@@ -180,6 +193,7 @@ if (agr_by != "county") {
                       group_by(race,hispanic_origin, pm) %>%
                       summarise(pop_size = sum(pop_size))
         
+        #seperate plot for all his or.
         for(his_or in unique(cens_agr$hispanic_origin)){
           cens_agr_his <- cens_agr %>% filter(hispanic_origin == his_or)
           
@@ -187,7 +201,7 @@ if (agr_by != "county") {
           g<-cens_agr_his %>%
             ggplot(aes(x=pm, y=pop_size, group=race, color=race)) +
             scale_color_viridis(discrete = TRUE) +
-            ggtitle(paste("hispanic origin:",his_or)) +
+            ggtitle(paste("hispanic origin:",his_or,"year:",year)) +
             theme_ipsum() +
             ylab("Number of persons exposed")+
             xlab("particulate matter (pm)")+
@@ -195,9 +209,6 @@ if (agr_by != "county") {
           
           ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_total.png")),
                  plot = g +geom_line())
-
-          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_total_smooth.png")),
-                 plot = g +geom_smooth(method = "loess",se=TRUE, fullrange=FALSE, level=0.9))
           
           #scale down/proportion
           # proportions
@@ -229,12 +240,7 @@ if (agr_by != "county") {
           
           ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_prop.png")),
                  plot = g +geom_line())
-          
-          #TODO kernel density estimation instead
-          ggsave(file.path(cens_agr_plotDir,paste0(region,"_",his_or,"_prop_smooth.png")),
-                 plot = g +geom_smooth(method = "loess",se=TRUE, fullrange=FALSE, level=0.9))
         }
-        #TODO
         toc()
       }
       
