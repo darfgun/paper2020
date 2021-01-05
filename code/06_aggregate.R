@@ -193,6 +193,12 @@ if (agr_by != "county") {
                       group_by(race,hispanic_origin, pm) %>%
                       summarise(pop_size = sum(pop_size))
         
+        #print total pop sizes, regardless of pm
+        cens_agr %>%
+          group_by(race,hispanic_origin) %>%
+          summarise(pop_size = sum(pop_size))%>%
+          write.csv(.,file.path(cens_agr_plotDir,"total_pop.csv"))
+        
         #seperate plot for all his or.
         for(his_or in unique(cens_agr$hispanic_origin)){
           cens_agr_his <- cens_agr %>% filter(hispanic_origin == his_or)

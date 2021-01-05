@@ -14,7 +14,7 @@ rm(list = ls(all = TRUE))
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
              "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat", "tictoc", 
-             "tidyverse","tigris","tmap","viridis","hrbrthemes")
+             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -91,9 +91,10 @@ paf.dir <- file.path(data.dir, "08_paf")
 dir.create(paf.dir, recursive = T, showWarnings = F)
 
 # paths of scripts
-download.cens.script <- file.path(code.dir, "01_download_cens.R")
+download.cens.meta.script <- file.path(code.dir, "01_download_meta.R")
+download.cens.script <- file.path(code.dir, "02_download_cens.R")
 interp.script <- file.path(code.dir, "02_interp.R")
-download.script <- file.path(code.dir, "03_download_other.R")
+download.other.script <- file.path(code.dir, "03_download_other.R")
 assignTract.script <- file.path(code.dir, "04_ass_trac.R")
 mrbrtRR.script <- file.path(code.dir, "05_mrbrt_rr.R")
 cens_agr.script <- file.path(code.dir, "06_aggregate.R")
@@ -102,33 +103,29 @@ paf.script <- file.path(code.dir, "07_paf.R")
 
 
 #--------parameters of code-------------------
-years <- c(2000,2010:2016)
+years <- c(2000)
 
-
-# runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, 2000))
-# runscript(script=download.cens.script, args = paste(censDir,tmpDir, 2010))
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
 for (year in years) {
-   runscript(script=download.cens.script, args = paste(dem.dir,tmp.dir, year))
-  
   args <- paste(
     year, # 1
     data.dir, # 2
-    tmp.dir, # 3l
+    tmp.dir, # 3
     exp.dir, # 4
     trac.dir, # 5
     exp.rr.dir, # 6
     trac.exp.dir, # 7 
-    dem.dir, # 8l
+    dem.dir, # 8
     dem.agr.dir, # 9 
     agr_by, # 10
     paf.dir # 11
   ) 
-
-  # runscript(script=download.script, args = args)
+   runscript(script=download.cens.script, args = args)
+  # runscript(script=download.other.script, args = args)
   # runscript(script=assignTract.script, args = args)
   # runscript(script=mrbrtRR.script, args = args)
-   runscript(script = cens_agr.script, args = args)
+  # runscript(script = cens_agr.script, args = args)
   # runscript(script = paf.script, args = args)
 }
+

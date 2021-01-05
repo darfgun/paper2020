@@ -11,7 +11,7 @@ rm(list = ls(all = TRUE))
 
 # load packages, install if missing
 packages <- c("dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse", 
-              "tigris", "tictoc", "cdcfluview","testthat")
+              "tigris", "tictoc", "cdcfluview","testthat","rlang")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -21,14 +21,18 @@ for (p in packages) {
 
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
-censDir <- args[1]
-tmpDir <- args[2]
-year <- args[3]
+year <- args[1]
+tmpDir <- args[3]
+censDir <- args[8]
 
-#TODO löschen
+#TODO l?schen
+#year <- 2000
+
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
-#year <- 2016
+
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 # quits, if not downloadable year
 if (!year %in% c(2000, 2010:2016)) {
@@ -217,7 +221,6 @@ if (!file.exists(filepathCensMeta)) {
 
   setnames(census_meta, "name", "variable") # rename for later purpose
 
-
   ## add corresponding age_group_id from causes ages
   census_meta <- census_meta %>%
     mutate(
@@ -234,14 +237,16 @@ if (!file.exists(filepathCensMeta)) {
   fwrite(census_meta, filepathCensMeta)
   census_meta <- read.csv(filepathCensMeta)
 
-  ## add some useful columns to calculate complement of "NOT HISPANIC OR LATINO" in "all"
+  # add some useful columns to calculate complement of "NOT HISPANIC OR LATINO" in "all",
+  # and create race "Asian or Pacific islander"
   census_meta <- census_meta %>%
     mutate(
       downloaded = TRUE,
       tot_var = NA,
       ntot_var = NA
     )
-
+  
+  #find pairs "all", "NOT HISPANIC OR LATINO"
   census_meta_all <- census_meta %>% filter(hispanic_origin == "all")
   census_meta_nhis <- census_meta %>% filter(hispanic_origin == "NOT HISPANIC OR LATINO")
   
@@ -273,116 +278,38 @@ if (!file.exists(filepathCensMeta)) {
       census_meta <- rbind(census_meta, row_copy)
     }
   }
-
+  
+  #find pairs asian, pacific islander
+  census_meta_asian <- census_meta %>% filter(race == "ASIAN")
+  census_meta_pac <- census_meta %>% filter(race == "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER")
+  
+  for (i in 1:nrow(census_meta_asian)) {
+    row <- census_meta_asian[i, ]
+    census_meta_pac_sub <- census_meta_pac %>%
+      filter(
+        year == row[["year"]],
+        gender_label == row[["gender_label"]],
+        min_age == row[["min_age"]],
+        max_age == row[["max_age"]],
+        hispanic_origin == row[["hispanic_origin"]]
+      )
+    
+    # if truly corresponds, add row
+    if (nrow(census_meta_pac_sub) == 1){
+      row_copy <- row %>% mutate(
+        downloaded = FALSE,
+        variable = paste0(variable, "P"),
+        race = "ASIAN OR PACIFIC ISLANDER"
+      )
+      variable_asian <- row[["variable"]]
+      variable_pac <- census_meta_pac_sub[1,"variable"]
+      
+      row_copy$tot_var[1] <- list(c(variable_asian,variable_pac))
+      
+      census_meta <- rbind(census_meta, row_copy)
+    }
+  }
+  
   fwrite(census_meta, filepathCensMeta)
   toc()
 }
-
-census_meta <- read.csv(filepathCensMeta)
-# identify relevant variables
-relevant_variables <- census_meta$variable %>% unique()
-
-## ---------------- download sex by age for each race----------------------
-censDir <- file.path(censDir, year)
-dir.create( censDir, recursive = T, showWarnings = F)
-
-tic(paste("Downloaded census data in year", toString(year)))
-# loop over all states
-apply(states, 1, function(state) {
-  STATEFP <- state["STATEFP"] %>% as.numeric
-  STUSPS <- state["STUSPS"]
-  name <- state["NAME"]
-
-  dem.state.dir <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
-    file.path(censDir, .)
-  
-  #download if does not exist yet
-  if (!file.exists(dem.state.dir)) {
-    tic(paste("Downloaded census data in year", toString(year), "in", name))
-    
-    #loop over all groups, download data
-    dem.state.data <- lapply(groups, function(group) {
-      tic(paste("Downloaded census data in year", toString(year), "in", name, "for group", group))
-      data <- getCensus(
-        name = tablename,
-        vintage = year,
-        vars = paste0("group(", group, ")"),
-        region = "tract:*",
-        regionin = sprintf("state:%02d", STATEFP)
-      ) 
-      #create GEO_ID, if it does not exist yet
-      if(!"GEO_ID" %in% colnames(data)){
-        data$GEO_ID <-paste0("1400000US",data$state,data$county,data$tract)
-      }
-      
-      data<- data%>%
-        select(
-          any_of(c(relevant_variables, "state", "county", "tract", "GEO_ID"))
-        ) %>%
-        pivot_longer(
-          cols = !c("state", "county", "tract", "GEO_ID"),
-          names_to = "variable",
-          values_to = "pop_size"
-        )
-      toc()
-      return(data)
-    }) %>%
-      do.call(rbind, .) %>%
-      as.data.frame()
-    
-    #save data
-    fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
-    dem.state.data <- dem.state.dir %>% read.csv()
-    
-    #make wider
-    #TODO other option?
-    dem.state.data <- dem.state.data %>%
-      group_by(variable) %>%
-      mutate(row = row_number()) %>%
-      pivot_wider(
-        names_from = variable,
-        values_from = pop_size
-      ) %>%
-      select(-row)
-    
-    
-    census_meta_sub <- census_meta %>% filter(downloaded == FALSE)
-
-    for (i in 1:nrow(census_meta_sub)) {
-      var <- census_meta_sub[i, "variable"]
-      tot_var <- census_meta_sub[i, "tot_var"]
-      
-      #parse String "A|B|C..." to vector c(A,B,C,...)
-      ntot_var <- census_meta_sub[i, "ntot_var"] %>%
-        strsplit(., "|", fixed = TRUE) %>%
-        unlist()
-      
-      #row sum all columnds
-      data_ntot <- dem.state.data[, ntot_var] %>%
-        apply(., 2, as.numeric) %>%
-        rowSums() %>%
-        unlist()
-      
-      #calculate "Hispanic or latino" = "all" - "not hispanic or latino"
-      dem.state.data[, var] <- (dem.state.data[, tot_var] %>% unlist()) - data_ntot
-    }
-    
-    #longer again
-    dem.state.data <- dem.state.data %>%
-      pivot_longer(
-        cols = !c("state", "county", "tract", "GEO_ID"),
-        names_to = "variable",
-        values_to = "pop_size"
-      ) %>%
-      filter(!is.na(pop_size))
-    
-    #save demographic data in seperate file for each state
-    fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
-    toc()
-  }
-})
-toc()
-""
-#file.path("tests","test_01_download_cens.R")
-#test_file("test_01_download_cens.R")
-#test_file("C:\Users\Daniel\Desktop\paper2020\code\tests\test_01_download_cens.R")
