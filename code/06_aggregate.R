@@ -75,7 +75,7 @@ apply(states, 1, function(state) {
     trac_censData <- paste0("census_", toString(year), "_", STUSPS, ".csv") %>%
       file.path(censDir, year, .)%>%
       read.csv %>%
-      setnames("GEO_ID", "AFFGEOID") %>%
+      #setnames("GEO_ID", "AFFGEOID") %>%
       pivot_wider(
         names_from = variable,
         values_from = pop_size
@@ -90,12 +90,12 @@ apply(states, 1, function(state) {
     #join above datasets
     cens_agr <- left_join(trac_censData,
                           exp_tracData,
-                          by = "AFFGEOID"
+                          by = "GEO_ID"
     )  %>%
       setDT() %>%
       #make long again
       melt(
-        id.vars = c("state", "county", "tract", "AFFGEOID", "pm"),
+        id.vars = c("state", "county", "tract", "GEO_ID", "pm"),
         variable.name = "variable"
       ) %>%
       group_by(state, county, variable, pm) %>%

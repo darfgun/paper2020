@@ -38,13 +38,16 @@ crosswalk <- file.path(tmpDir,"crosswalk_2000_2010.csv") %>%
   setnames("trtid00.","trtid00") %>%
   mutate(trtid00= str_sub(trtid00,1,11))
 
-crosswalk<-crosswalk[,c("trtid00","trtid10","weight")]
+crosswalk<-crosswalk%>%
+        select(trtid00,trtid10) %>%
+        mutate(trtid00_long =paste0("1400000US",trtid00),
+               trtid10_long =paste0("1400000US",trtid10))
 
 censDir00 <- file.path(censDir, "2000")
 censDir10 <- file.path(censDir, "2010")
 
-censDir00_in10<-file.path(censDir, "2000_in_2010")
-dir.create(censDir00_in10, recursive = T, showWarnings = F)
+censDir10_in00<-file.path(censDir, "2010_in_2000")
+dir.create(censDir10_in00, recursive = T, showWarnings = F)
 
 ##-----calculate-----
 
@@ -52,23 +55,17 @@ apply(states, 1, function(state) {
   STUSPS <- state["STUSPS"]
   name <- state["NAME"]
   
-  censDir00_in10_X <- file.path(censDir00_in10, paste0("census_2000_", STUSPS, ".csv"))
-  
-  if(!file.exists(censDir00_in10_X)){
-    tic(paste("calculated 2000 demographic census data in 2010 boundaries in",name))
-    #read demographic census data by tract, make data wider
-    trac_censData00 <-  file.path(censDir00, paste0("census_2000_", STUSPS, ".csv"))%>%
-      read.csv(
-               #colClasses=c(pop_size="numeric")
-               )
-      
-    print(1)
-    trac_censData00<-trac_censData00%>%
-      mutate(short_geo_id=GEO_ID %>% str_sub(.,-11,-1))
-    print(2)
+  censDir10_in00X <- file.path(censDir10_in00, paste0("census_2010_", STUSPS, ".csv"))
+  if(!file.exists(censDir10_in00X)){
+    tic(paste("calculated 2010 demographic census data in 2000 boundaries in",name))
+    #read demographic census data by tract,
+    censData10 <-  file.path(censDir10, paste0("census_2010_", STUSPS, ".csv"))%>%
+      read.csv(colClasses=c(pop_size="numeric"))
     
-    write.csv(trac_censData00,censDir00_in10_X)
+    censData10 <- censData10 %>% 
+      left_join(crosswalk, by=c("GEO_ID"="trtid10_long" )) %>%
+      group_by(trtid00_long,variable)#%>%
+      #summarise()
     toc()
   }
-
   })

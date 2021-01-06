@@ -91,7 +91,7 @@ paf.dir <- file.path(data.dir, "08_paf")
 dir.create(paf.dir, recursive = T, showWarnings = F)
 
 # paths of scripts
-download.cens.meta.script <- file.path(code.dir, "01_download_meta.R")
+download.meta.script <- file.path(code.dir, "01_download_meta.R")
 download.cens.script <- file.path(code.dir, "02_download_cens.R")
 interp.script <- file.path(code.dir, "02_interp.R")
 download.other.script <- file.path(code.dir, "03_download_other.R")
@@ -121,6 +121,7 @@ for (year in years) {
     agr_by, # 10
     paf.dir # 11
   ) 
+  runscript(script=download.meta.script, args = args)
    runscript(script=download.cens.script, args = args)
   # runscript(script=download.other.script, args = args)
   # runscript(script=assignTract.script, args = args)

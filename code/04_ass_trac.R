@@ -103,9 +103,6 @@ apply(states, 1, function(state) {
     lat_max <- bbox$ymax %>%
       min(., lat_vec[length(lat_vec)])
     
-    if(is.na(bbox$xmin)){
-      glimpse( geometry)
-    }
     
     # estimate corresponding grid in pm exposure data
     long_row_min <- -1 + ((long_min - long_vec[1]) / m_max_long) %>%
@@ -170,7 +167,7 @@ apply(states, 1, function(state) {
   
   tracts <- tracts %>%
     as.data.frame() %>%
-    select(c("AFFGEOID", "pm"))  
+    select(c("GEO_ID", "pm"))  
 
   write.csv(tracts, exp_tracDirX, row.names = FALSE)
 })
