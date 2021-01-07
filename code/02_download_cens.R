@@ -26,13 +26,13 @@ tmpDir <- args[3]
 censDir <- args[8]
 
 #TODO l?schen
-year <- 2010
+#year <- 2000
 
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
 
-tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 # quits, if not downloadable year
 if (!year %in% c(2000, 2010:2016)) {
@@ -99,16 +99,9 @@ apply(states, 1, function(state) {
         regionin = sprintf("state:%02d", STATEFP)
       ) 
       
-      #create GEO_ID, if it does not exist yet
-      if("GEO_ID" %in% colnames(data)){
-        data$GEO_ID<- data$GEO_ID %>% str_sub(.,-11,-1)
-      }else{
-        data$GEO_ID <-paste0(formatC(data$state, width=2, flag="0"),
-                             formatC(data$county, width=3, flag="0"),
-                             formatC(data$tract, width=6, flag="0")
-        ) 
-      }
-      #https://stackoverflow.com/questions/8266915/format-number-as-fixed-width-with-leading-zeros
+      #subset relevant part of GEO_ID
+      data$GEO_ID<- data$GEO_ID %>% 
+        str_sub(.,-11,-1) 
       
       data<- data%>%
         select(
@@ -126,8 +119,9 @@ apply(states, 1, function(state) {
       as.data.frame()
     
     #save data
+    
     fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
-    dem.state.data <- dem.state.dir %>% read.csv()
+    dem.state.data2 <- dem.state.dir %>% fread #TODO
     
     #make wider
     tic(paste("Made additional calculations with census data in year",toString(year), "in", name))

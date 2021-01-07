@@ -89,15 +89,17 @@ if(year %in% c(2000:2016)){
         tic(paste("Downloaded census tracts shape files for", year, name))
         
         #harmonize data
-        #TODO
         if(year == 2000){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
-          #tracts$AFFGEOID <-paste0("1400000US",tracts$STATE,tracts$COUNTY,tracts$TRACT)
+
           tracts$GEO_ID <-paste0(tracts$STATE,tracts$COUNTY,tracts$TRACT)
+          #data$GEO_ID <-paste0(formatC(data$state, width=2, flag="0"),
+          #                     formatC(data$county, width=3, flag="0"),
+          #                     formatC(data$tract, width=6, flag="0")
+          #) 
         }else if(year %in% 2001:2009){
-          tracts <- tracts(state = STUSPS, cb = TRUE, year = 2010)
-          #setnames(tracts, "GEO_ID", "AFFGEOID")
-          tracts$GEO_ID<- tracts$GEO_ID %>% str_sub(.,-11,-1)
+          tracts <- tracts(state = STUSPS, cb = TRUE, year = 2000)
+          tracts$GEO_ID <-paste0(tracts$STATE,tracts$COUNTY,tracts$TRACT)
         }else if(year == 2010){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
           #setnames(tracts, "GEO_ID", "AFFGEOID")
@@ -113,7 +115,6 @@ if(year %in% c(2000:2016)){
         #save only relevant data
         tracts<- tracts %>% 
                   select("GEO_ID","geometry")
-                  #select("AFFGEOID","geometry") #%>% #TODO
                   #filter(!is.na(AFFGEOID)) #some are entirely in water, e.g. tract 01003990000 => ignore those
         #TODO
         

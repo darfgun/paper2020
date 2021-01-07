@@ -1,10 +1,13 @@
+library(stringr)
 
-#library(foreign)
-#data <- read.dta("/Users/default/Downloads/interpolate_to_2000/crosswalk_2010_2000.dta")
+ex_GEO_ID<-censData10[[1,"GEO_ID"]] 
 
-formatC(5, width=6, flag="0")
+ex_GEO_ID <- ex_GEO_ID %>%toString
 
-a <-paste0(formatC(1, width=2, flag="0"),
-                     formatC(23, width=3, flag="0"),
-                     formatC(456, width=6, flag="0")
-) 
+ex_GEO_ID3<- str_pad(ex_GEO_ID, 11, pad = "0")
+
+
+
+
+censData102 <- censData10 %>%
+  mutate(GEO_ID = sprintf("%11d", GEO_ID))

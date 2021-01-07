@@ -35,7 +35,7 @@ censDir <- args[8]
 #censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 # quits, if not downloadable year
-if (!year %in% c(2000, 2010:2016)) {
+if (!year %in% c(2000:2016)) {
   print(paste("can not download census data for", year))
   quit()
 }
@@ -91,7 +91,7 @@ filepathCensMeta <- paste0("cens_meta_", toString(year), ".csv") %>%
   file.path(censMetaDir, .)
 
 # relevant groups for each year and table names
-if (year == 2000) {
+if (year %in% 2000:2009) {
   # decennical census, sex by age for races
   groups <- c("P012A", "P012B", "P012C", "P012D","P012E", "P012I","PCT012J", "PCT012K", "PCT012L", "PCT012M") 
   tablename <- "dec/sf1"
@@ -113,7 +113,9 @@ if (!file.exists(filepathCensMeta)) {
   census_meta <- lapply(groups, function(group) {
     listCensusMetadata(
       name = tablename,
-      vintage = year,
+      vintage = ifelse(year %in% 2001:2009,
+                       2000,
+                       year),
       type = "variables",
       group = group
     ) %>%

@@ -66,7 +66,8 @@ if (file.exists(causes_agesDir)) {
 #  write.csv(tmrels,tmrelsDir, row.names = FALSE)
 # }
 
-tmrel <- mean(2.4, 5.9)
+#tmrel <- mean(2.4, 5.9)
+tmrel <- 1.3
 ## ----------calculation---------
 
 tic("Calculated RR from MR-BRT for all causes")
