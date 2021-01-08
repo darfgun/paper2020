@@ -26,7 +26,8 @@ tmpDir<-args[3]
 censDir <- args[8]
 
 #year<-2001
-#dataDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#dataDir <- "/Users/default/Desktop/paper2020/data"
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
 #censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 if (!year %in% 2001:2009) {
@@ -37,8 +38,8 @@ if (!year %in% 2001:2009) {
 states <- file.path(tmpDir, "states.csv") %>% read.csv
 
 crosswalk <- read.dta(file.path(dataDir,"crosswalk_2010_2000.dta"))%>%
-  select(trtid00,trtid10,weight)%>%
-  filter(weight != 0)
+  select(trtid00,trtid10,weight)#%>%
+  #filter(weight != 0)
 
 #crosswalk <- file.path(tmpDir,"crosswalk_2000_2010.csv") %>% 
 #read.table(., header=TRUE) %>%
@@ -117,11 +118,7 @@ apply(states, 1, function(state) {
       )
       
     #testthat after GEO_ID crosswalk same population size
-      test_that("02_interp", {
-        #sapply(censData10_copy$pop_size, function(x) expect_gte(x,0))
-        #sapply(crosswalk$weight, function(x) expect_gte(x,0))
-        #sapply(censData10$pop_size, function(x) expect_gte(x,0))
-      
+      test_that("02_interp 2010 in 2000 boundaries", {
         comp1<-censData10_copy %>%
           ungroup%>% 
           group_by(variable)%>%
@@ -138,11 +135,6 @@ apply(states, 1, function(state) {
           expect_equal(row[["pop_size.x"]],row[["pop_size.y"]], tolerance=1)
         }
         )
-        #DF<-censData10
-        #if(any(is.na(DF))){
-        #  new_DF <- DF[rowSums(is.na(DF)) > 0,]
-        #  browser()
-        #}
       })
     
     fwrite(censData10,censDir10_in00X)
@@ -165,17 +157,18 @@ apply(states, 1, function(state) {
     censData10<-fread(file.path(censDir10_in00, paste0("census_2010_", STUSPS, ".csv")))%>%
       rename(pop_size10 = pop_size)
     
-    #TODO delete
-    #antijoin <-anti_join(censData10,censData00,by=c("GEO_ID"="GEO_ID","variable"="variable"))
-    ValidatePrimKey(x=censData00, prim.key="GEO_ID")
-    
     censData_joined <-full_join(censData00,censData10, 
                                 by=c("GEO_ID"="GEO_ID","variable"="variable"))
+    
+    test_that("03_interp censData_joined",{
+      expect_false(any(is.na(censData_joined)))
+    })
      
     #censData_joined<-censData_joined%>% 
     #        mutate(pop_size00=replace_na(pop_size00, 0),
     #               pop_size10=replace_na(pop_size10, 0))
     
+    t<-(year-2000)/10
     censDataYear<-censData_joined %>%
                     mutate(pop_size = t*pop_size00+(1-t)*pop_size10)%>%
                     select(state.x,county.x,tract.x,GEO_ID,variable,pop_size)%>%#TODO
@@ -184,5 +177,39 @@ apply(states, 1, function(state) {
                            tract =tract.x)
     
     fwrite(censDataYear,censDirYearX)
+    
+    #testthat 
+    test_that("02_interp actual interpolation", {
+      censData00_agr<-censData00 %>%
+        ungroup%>% 
+        group_by(variable)%>%
+        summarise(pop_size00 = sum(pop_size00)) 
+      
+      censData10_agr<-censData10 %>%
+        ungroup%>% 
+        group_by(variable)%>%
+        summarise(pop_size10 = sum(pop_size10))
+      
+      censDataYear_agr<-censDataYear %>%
+        ungroup%>% 
+        group_by(variable)%>%
+        summarise(pop_sizeYear = sum(pop_size))
+      
+      comp4 <- censData00_agr %>%
+        full_join(censData10_agr, by= "variable")%>%
+        full_join(censDataYear_agr,censData10_agr, by= "variable")
+      
+      comp4<-comp4 %>% 
+              mutate(inInterval=(
+                                (pop_size00 <=pop_sizeYear &&
+                                pop_sizeYear<=pop_size10) ||
+                               (pop_size10 <=pop_sizeYear &&
+                                pop_sizeYear<=pop_size00)
+                                )
+                    )
+      
+        expect_true(all(comp4$inInterval))
+      
+    })
   }
 })

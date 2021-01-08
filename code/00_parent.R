@@ -7,9 +7,13 @@
 #***************************************************************************
 
 #------------------SET-UP--------------------------------------------------
-
 # clear memory
 rm(list = ls(all = TRUE))
+
+#console
+con <- file("console.log")
+sink(con, append=TRUE)
+sink(con, append=TRUE, type="message")
 
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
@@ -93,12 +97,12 @@ dir.create(paf.dir, recursive = T, showWarnings = F)
 # paths of scripts
 download.meta.script <- file.path(code.dir, "01_download_meta.R")
 download.cens.script <- file.path(code.dir, "02_download_cens.R")
-interp.script <- file.path(code.dir, "02_interp.R")
-download.other.script <- file.path(code.dir, "03_download_other.R")
-assignTract.script <- file.path(code.dir, "04_ass_trac.R")
-mrbrtRR.script <- file.path(code.dir, "05_mrbrt_rr.R")
-cens_agr.script <- file.path(code.dir, "06_aggregate.R")
-paf.script <- file.path(code.dir, "07_paf.R")
+interp.script <- file.path(code.dir, "03_interp.R")
+download.other.script <- file.path(code.dir, "04_download_other.R")
+assignTract.script <- file.path(code.dir, "05_ass_trac.R")
+mrbrtRR.script <- file.path(code.dir, "06_mrbrt_rr.R")
+cens_agr.script <- file.path(code.dir, "07_aggregate.R")
+paf.script <- file.path(code.dir, "08_paf.R")
 
 
 
@@ -132,3 +136,7 @@ for (year in years) {
    #runscript(script = paf.script, args = args)
 }
 
+#save console
+# Restore output to console
+sink() 
+sink(type="message")
