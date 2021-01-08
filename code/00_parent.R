@@ -129,14 +129,15 @@ for (year in years) {
    }else{
      runscript(script=download.cens.script, args = args)
    }
-   #runscript(script=download.other.script, args = args)
-   #runscript(script=assignTract.script, args = args)
-   #runscript(script=mrbrtRR.script, args = args)
-   #runscript(script = cens_agr.script, args = args)
-   #runscript(script = paf.script, args = args)
+   runscript(script=download.other.script, args = args)
+   runscript(script=assignTract.script, args = args)
+   runscript(script=mrbrtRR.script, args = args)
+   runscript(script = cens_agr.script, args = args)
+   runscript(script = paf.script, args = args)
+   
+   #save console
+   # Restore output to console
+   sink() 
+   sink(type="message", append = TRUE)
 }
 
-#save console
-# Restore output to console
-sink() 
-sink(type="message")
