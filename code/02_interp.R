@@ -22,6 +22,7 @@ options(dplyr.join.inform = FALSE)
 args <- commandArgs(trailingOnly = T)
 year <- args[1]
 dataDir <- args[2]
+tmpDir<-args[3]
 censDir <- args[8]
 
 #year<-2001
@@ -38,6 +39,11 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv
 crosswalk <- read.dta(file.path(dataDir,"crosswalk_2010_2000.dta"))%>%
   select(trtid00,trtid10,weight)%>%
   filter(weight != 0)
+
+#crosswalk <- file.path(tmpDir,"crosswalk_2000_2010.csv") %>% 
+#read.table(., header=TRUE) %>%
+#  setnames("trtid00.","trtid00") %>%
+#  mutate(trtid00= str_sub(trtid00,1,11))
 
 censDir00 <- file.path(censDir, "2000")
 censDir10 <- file.path(censDir, "2010")

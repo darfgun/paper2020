@@ -105,8 +105,6 @@ paf.script <- file.path(code.dir, "07_paf.R")
 #--------parameters of code-------------------
 years <- c(2010,2000,2001)
 
-# runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
-
 for (year in years) {
   args <- paste(
     year, # 1
@@ -127,11 +125,10 @@ for (year in years) {
    }else{
      runscript(script=download.cens.script, args = args)
    }
-   runscript(script=interp.script, args = args)
-   runscript(script=download.other.script, args = args)
-   runscript(script=assignTract.script, args = args)
-   runscript(script=mrbrtRR.script, args = args)
-   runscript(script = cens_agr.script, args = args)
-   runscript(script = paf.script, args = args)
+   #runscript(script=download.other.script, args = args)
+   #runscript(script=assignTract.script, args = args)
+   #runscript(script=mrbrtRR.script, args = args)
+   #runscript(script = cens_agr.script, args = args)
+   #runscript(script = paf.script, args = args)
 }
 

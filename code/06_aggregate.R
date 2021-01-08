@@ -170,7 +170,7 @@ if (agr_by != "county") {
           apply(1,function(row){
             expect_equal(1,row[["sum_prop"]] %>% as.numeric)
           })
-        expect_equal(any(is.na(cens_agr)), FALSE)
+        expect_false(any(is.na(cens_agr)))
       })
       
       # add region

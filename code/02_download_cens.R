@@ -26,7 +26,7 @@ tmpDir <- args[3]
 censDir <- args[8]
 
 #TODO l?schen
-#year <- 2010
+#year <- 2000
 
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
@@ -170,6 +170,8 @@ apply(states, 1, function(state) {
 
       #calculate "Hispanic or latino" = "all" - "not hispanic or latino"
       dem.state.data[, var] <- data_tot - data_ntot 
+      #some times estimates lead to negative results
+      dem.state.data[, var]<-dem.state.data[, var] %>% sapply(function(x) max(x,0))
     }
     
     #drop Asian Alone, Pacific Islander alone in favor of combined race "ASIAn OR Pacific islander"
@@ -191,12 +193,16 @@ apply(states, 1, function(state) {
       filter(!is.na(pop_size))
     toc()
     
-    #TODO taking far too long
     test_that("02_download end", {
-    #  tic("ran some tests")
-    #  sapply(dem.state.data$pop_size, function(x) expect_gte(x%>%as.numeric,0))
+    expect_false(any(is.na(dem.state.data)))
     expect_true(all(dem.state.data$pop_size >= 0))
-    #  toc()
+    
+    #TODO delete
+    if(!all(dem.state.data$pop_size >= 0)){
+      negativeRows<-dem.state.data[dem.state.data$pop_size < 0,]
+      variables_negative<- census_meta[census_meta$variable %in% (negativeRows$variable),]
+      browser()
+    }
     })
   
     #save demographic data in seperate file for each state
