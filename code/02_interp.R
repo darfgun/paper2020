@@ -21,11 +21,11 @@ options(dplyr.join.inform = FALSE)
 # Pass in arguments
 args <- commandArgs(trailingOnly = T)
 year <- args[1]
-tmpDir <- args[3]
+dataDir <- args[2]
 censDir <- args[8]
 
 #year<-2001
-#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#dataDir <- "/Users/default/Desktop/paper2020/data/tmp"
 #censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 if (!year %in% 2001:2009) {
@@ -35,7 +35,7 @@ if (!year %in% 2001:2009) {
 
 states <- file.path(tmpDir, "states.csv") %>% read.csv
 
-crosswalk <- read.dta(file.path(tmpDir,"crosswalk_2010_2000.dta"))%>%
+crosswalk <- read.dta(file.path(dataDir,"crosswalk_2010_2000.dta"))%>%
   select(trtid00,trtid10,weight)%>%
   filter(weight != 0)
 
