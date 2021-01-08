@@ -103,7 +103,7 @@ paf.script <- file.path(code.dir, "07_paf.R")
 
 
 #--------parameters of code-------------------
-years <- c(2010)
+years <- c(2010,2000,2001)
 
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
