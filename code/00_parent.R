@@ -103,7 +103,7 @@ paf.script <- file.path(code.dir, "07_paf.R")
 
 
 #--------parameters of code-------------------
-years <- c(2001)
+years <- c(2010)
 
 # runscript(script=interp.script, args = paste(censDir,tmpDir, 2001))
 
@@ -121,11 +121,11 @@ for (year in years) {
     agr_by, # 10
     paf.dir # 11
   ) 
-   runscript(script=download.meta.script, args = args)
+   #runscript(script=download.meta.script, args = args)
    if(year %in% 2001:2009){
-     runscript(script=interp.script, args = args)
+    # runscript(script=interp.script, args = args)
    }else{
-     runscript(script=download.cens.script, args = args)
+    # runscript(script=download.cens.script, args = args)
    }
  #  runscript(script=interp.script, args = args)
  #  runscript(script=download.other.script, args = args)

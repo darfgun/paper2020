@@ -90,7 +90,7 @@ apply(states, 1, function(state) {
     #join above datasets
     cens_agr <- left_join(trac_censData,
                           exp_tracData,
-                          by = "GEO_ID"
+                          by = "GEO_ID" #TODO still works with short GEO_ID?
     )  %>%
       setDT() %>%
       #make long again

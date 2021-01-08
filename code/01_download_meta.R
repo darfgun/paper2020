@@ -307,6 +307,7 @@ if (!file.exists(filepathCensMeta)) {
       variable_pac <- census_meta_pac_sub[1,"variable"]
       
       row_copy$tot_var[1] <- list(c(variable_asian,variable_pac))
+      row_copy$ntot_var[1] <- NA
       
       census_meta <- rbind(census_meta, row_copy)
     }

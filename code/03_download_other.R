@@ -24,6 +24,10 @@ tmpDir <- args[3]
 expDir <- args[4]
 tracDir <- args[5]
 
+#year<-2000
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#expDir <- "/Users/default/Desktop/paper2020/data/01_exposure"
+#tracDir <- "/Users/default/Desktop/paper2020/data/02_tracts"
 
 #-- load data---
 states <- file.path(tmpDir,"states.csv") %>% read.csv
@@ -91,12 +95,8 @@ if(year %in% c(2000:2016)){
         #harmonize data
         if(year == 2000){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = year)
-
+          
           tracts$GEO_ID <-paste0(tracts$STATE,tracts$COUNTY,tracts$TRACT)
-          #data$GEO_ID <-paste0(formatC(data$state, width=2, flag="0"),
-          #                     formatC(data$county, width=3, flag="0"),
-          #                     formatC(data$tract, width=6, flag="0")
-          #) 
         }else if(year %in% 2001:2009){
           tracts <- tracts(state = STUSPS, cb = TRUE, year = 2000)
           tracts$GEO_ID <-paste0(tracts$STATE,tracts$COUNTY,tracts$TRACT)

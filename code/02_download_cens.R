@@ -26,7 +26,7 @@ tmpDir <- args[3]
 censDir <- args[8]
 
 #TODO l?schen
-#year <- 2000
+#year <- 2010
 
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
@@ -179,7 +179,7 @@ apply(states, 1, function(state) {
       unlist
     
     dem.state.data<-dem.state.data %>%
-              select(!census_meta_sub) #TODO
+              select(!census_meta_sub) #TODO all_of
     
     #longer again
     dem.state.data <- dem.state.data %>%
@@ -191,6 +191,14 @@ apply(states, 1, function(state) {
       filter(!is.na(pop_size))
     toc()
     
+    #TODO taking far too long
+    test_that("02_download end", {
+    #  tic("ran some tests")
+    #  sapply(dem.state.data$pop_size, function(x) expect_gte(x%>%as.numeric,0))
+    expect_true(all(dem.state.data$pop_size >= 0))
+    #  toc()
+    })
+  
     #save demographic data in seperate file for each state
     fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
     toc()

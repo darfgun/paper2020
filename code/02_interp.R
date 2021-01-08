@@ -42,9 +42,6 @@ crosswalk <- read.dta(file.path(tmpDir,"crosswalk_2010_2000.dta"))%>%
 censDir00 <- file.path(censDir, "2000")
 censDir10 <- file.path(censDir, "2010")
 
-censDir10_in00<-file.path(censDir, "2010_in_2000")
-dir.create(censDir10_in00, recursive = T, showWarnings = F)
-
 ##-----pair meta data from 2000 and 2010 -----
 meta_crosswalkDir <- file.path(censDir,"meta","2000_2010_cross.csv")
 if(!file.exists(meta_crosswalkDir)){
@@ -72,6 +69,9 @@ if(!file.exists(meta_crosswalkDir)){
 meta_crosswalk<-fread(meta_crosswalkDir)
 
 ##-----calculate 2010 data in 2000 boundaries and meta data -----
+censDir10_in00<-file.path(censDir, "2010_in_2000")
+dir.create(censDir10_in00, recursive = T, showWarnings = F)
+
 apply(states, 1, function(state) {
   STUSPS <- state["STUSPS"]
   name <- state["NAME"]
@@ -93,6 +93,7 @@ apply(states, 1, function(state) {
     #TODO löschen
     censData10_copy <-censData10
     
+    #TODO popsize negative
     #translate tracts
     censData10 <- censData10 %>% 
       inner_join(crosswalk, by=c("GEO_ID"="trtid10")) %>% #TODO left_join 
@@ -102,8 +103,8 @@ apply(states, 1, function(state) {
       rename(GEO_ID=trtid00)
       as.data.frame
     
-      
       censData10 <- censData10 %>% mutate(
+        #TODO 
         state = str_sub(GEO_ID,1,2),
         county =str_sub(GEO_ID,3,6),
         tract =str_sub(GEO_ID,7,11)
@@ -111,6 +112,10 @@ apply(states, 1, function(state) {
       
     #testthat after GEO_ID crosswalk same population size
       test_that("02_interp", {
+        #sapply(censData10_copy$pop_size, function(x) expect_gte(x,0))
+        #sapply(crosswalk$weight, function(x) expect_gte(x,0))
+        #sapply(censData10$pop_size, function(x) expect_gte(x,0))
+      
         comp1<-censData10_copy %>%
           ungroup%>% 
           group_by(variable)%>%
@@ -138,7 +143,40 @@ apply(states, 1, function(state) {
     toc()
   }
   })
-##-----TODO actual interpolation-----
-censData10 <-  file.path(censDir10, paste0("census_2010_", STUSPS, ".csv"))%>%
-  fread(colClasses=c(pop_size="numeric")) %>%
-  rename(pop_size10 = pop)
+##----- actual interpolation-----
+censDirYear<-file.path(censDir, year)
+dir.create(censDirYear, recursive = T, showWarnings = F)
+
+apply(states, 1, function(state) {
+  STUSPS <- state["STUSPS"]
+  name <- state["NAME"]
+  
+  censDirYearX <- file.path(censDirYear, paste0("census_",toString(year),"_", STUSPS, ".csv"))
+  if(!file.exists(censDirYearX)){
+    #TODO something wrong
+    censData00<-fread(file.path(censDir00, paste0("census_2000_", STUSPS, ".csv")))%>%
+      rename(pop_size00 = pop_size)
+    censData10<-fread(file.path(censDir10_in00, paste0("census_2010_", STUSPS, ".csv")))%>%
+      rename(pop_size10 = pop_size)
+    
+    #TODO delete
+    #antijoin <-anti_join(censData10,censData00,by=c("GEO_ID"="GEO_ID","variable"="variable"))
+    ValidatePrimKey(x=censData00, prim.key="GEO_ID")
+    
+    censData_joined <-full_join(censData00,censData10, 
+                                by=c("GEO_ID"="GEO_ID","variable"="variable"))
+     
+    #censData_joined<-censData_joined%>% 
+    #        mutate(pop_size00=replace_na(pop_size00, 0),
+    #               pop_size10=replace_na(pop_size10, 0))
+    
+    censDataYear<-censData_joined %>%
+                    mutate(pop_size = t*pop_size00+(1-t)*pop_size10)%>%
+                    select(state.x,county.x,tract.x,GEO_ID,variable,pop_size)%>%#TODO
+                    rename(state =state.x,
+                           county =county.x,
+                           tract =tract.x)
+    
+    fwrite(censDataYear,censDirYearX)
+  }
+})
