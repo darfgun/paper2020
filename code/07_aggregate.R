@@ -95,7 +95,8 @@ apply(states, 1, function(state) {
         mutate(rowsum=rowSums(trac_censData_sub[,-c(1:4)])) %>%
         filter(rowsum >0)
       if(nrow(trac_censData_sub)>0){
-        warning("exp_tracData and trac_censData should have same GEO_IDs in 06_aggregate")
+        print(paste("In",name, "exp_tracData and trac_censData differ by",nrow(trac_censData_sub),"rows:"))
+        glimpse(trac_censData_sub$GEO_ID)
         #browser()
       }
     } 
