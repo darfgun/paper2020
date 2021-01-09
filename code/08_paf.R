@@ -31,14 +31,14 @@ agr_by <- args[10]
 pafDir <- args[11]
 
 # TODO löschen
-year <- 2010
-agr_by <- "nation"
+#year <- 2010
+#agr_by <- "nation"
 
-tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-exp_rrDir <- "/Users/default/Desktop/paper2020/data/04_exp_rr"
-censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
-cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
-pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#exp_rrDir <- "/Users/default/Desktop/paper2020/data/04_exp_rr"
+#censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+#cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
+#pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
 
 #/Users/default/Desktop/paper2020/data/07_dem.agr/nation/2010
 #tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
