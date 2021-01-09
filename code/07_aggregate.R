@@ -10,7 +10,9 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc","viridis","hrbrthemes")
+packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc","viridis",
+              "hrbrthemes"
+              )
 
 for (p in packages) {
   suppressWarnings(library(p, character.only = T, warn.conflicts = FALSE, quietly = TRUE))
@@ -29,13 +31,13 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-#year <- 2012
-#agr_by <- "nation"
+year <- 2010
+agr_by <- "nation"
 
-# tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-# exp_tracDir <- "/Users/default/Desktop/own_code2/data/03_exp_tracts"
-# censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
-# cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_dem.agr"
+ tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+ exp_tracDir <- "/Users/default/Desktop/paper2020/data/03_exp_tracts"
+ censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+ cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
 
 #tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
 #exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
@@ -47,14 +49,14 @@ if (!agr_by %in% c("county", "Census_Region", "Census_division", "hhs_region_num
   quit()
 }
 
-cens_agrDirC <- cens_agrDir %>% file.path(., "county", year)
+cens_agrDirC <-  file.path(cens_agrDir, "county", year)
 dir.create(cens_agrDirC, recursive = T, showWarnings = F)
 
-cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
+cens_agrDir <-  file.path(cens_agrDir, agr_by, year)
 dir.create(cens_agrDir, recursive = T, showWarnings = F)
 
 # load states, so we can loop over them
-states <- file.path(tmpDir, "states.csv") %>% read.csv()
+states <- file.path(tmpDir, "states.csv") %>% read.csv
 
 
 ## ---- calculate county-------
@@ -85,15 +87,26 @@ apply(states, 1, function(state) {
     exp_tracData <- file.path(exp_tracDir, year, paste0("exp_trac_", toString(year), "_", STUSPS, ".csv")) %>%
       read.csv
     
-    if (nrow(exp_tracData) != nrow(trac_censData)) warning("exp_tracData and trac_censData should have same number of rows in 06_aggregate")
+    #TODO löschen?
+    sym_dif<-sets::set_symdiff(exp_tracData$GEO_ID,trac_censData$GEO_ID) %>% unlist
+    if (!is.null(sym_dif)){
+      trac_censData_sub <- trac_censData %>% 
+        filter(GEO_ID %in% sym_dif) %>%
+        mutate(rowsum=rowSums(trac_censData_sub[,-c(1:4)])) %>%
+        filter(rowsum >0)
+      if(nrow(trac_censData_sub)>0){
+        warning("exp_tracData and trac_censData should have same GEO_IDs in 06_aggregate")
+        #browser()
+      }
+    } 
     
     #join above datasets
-    cens_agr <- left_join(trac_censData,
+    cens_agr <- inner_join(trac_censData,
                           exp_tracData,
-                          by = "GEO_ID" #TODO still works with short GEO_ID?
+                          by = "GEO_ID" 
     )  %>%
-      setDT() %>%
       #make long again
+      setDT %>%
       melt(
         id.vars = c("state", "county", "tract", "GEO_ID", "pm"),
         variable.name = "variable"
@@ -253,6 +266,4 @@ if (agr_by != "county") {
     }
   }
 }
-
-
 ""

@@ -25,10 +25,10 @@ dataDir <- args[2]
 tmpDir<-args[3]
 censDir <- args[8]
 
-#year<-2001
-#dataDir <- "/Users/default/Desktop/paper2020/data"
-#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-#censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+year<-2001
+dataDir <- "/Users/default/Desktop/paper2020/data"
+tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 if (!year %in% 2001:2009) {
   print(paste("can not interpolate census data for", year))
@@ -157,6 +157,7 @@ apply(states, 1, function(state) {
     censData10<-fread(file.path(censDir10_in00, paste0("census_2010_", STUSPS, ".csv")))%>%
       rename(pop_size10 = pop_size)
     
+    
     censData_joined <-full_join(censData00,censData10, 
                                 by=c("GEO_ID"="GEO_ID","variable"="variable"))
     
@@ -200,12 +201,9 @@ apply(states, 1, function(state) {
         full_join(censDataYear_agr,censData10_agr, by= "variable")
       
       comp4<-comp4 %>% 
-              mutate(inInterval=(
-                                (pop_size00 <=pop_sizeYear &&
-                                pop_sizeYear<=pop_size10) ||
-                               (pop_size10 <=pop_sizeYear &&
-                                pop_sizeYear<=pop_size00)
-                                )
+              mutate(inInterval=
+                dplyr::between(pop_sizeYear,pop_size00,pop_size10)||
+                dplyr::between(pop_sizeYear,pop_size10,pop_size00)
                     )
       
         expect_true(all(comp4$inInterval))

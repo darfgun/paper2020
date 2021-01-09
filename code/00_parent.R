@@ -137,7 +137,6 @@ for (year in years) {
    
    #save console
    # Restore output to console
-   sink() 
    sink(type="message", append = TRUE)
 }
 
