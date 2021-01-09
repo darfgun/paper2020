@@ -138,4 +138,4 @@ for (year in years) {
    #save console
    # Restore output to console
    sink(type="message", append = TRUE)
-}
+}    
