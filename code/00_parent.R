@@ -138,6 +138,6 @@ for (year in years) {
    runscript(script = paf.script, args = args)
    
    #save console
-   # Restore output to console
+   #  Restore output to console
    sink(type="message", append = TRUE)
 }    

@@ -136,7 +136,9 @@ for (region in regions) {
     
     pafs[, agr_by] <- region
     
-    pafs <- left_join(pafs,census_meta, by= c("censMeta.variable"="variable"))
+    pafs <- left_join(pafs,census_meta, by= c("censMeta.variable"="variable"))%>%
+                select(!censMeta.variable)
+                            
       
     write.csv(pafs, pafDirX, row.names = FALSE)
     toc()
