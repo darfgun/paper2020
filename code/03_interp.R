@@ -25,10 +25,10 @@ dataDir <- args[2]
 tmpDir<-args[3]
 censDir <- args[8]
 
-year<-2001
-dataDir <- "/Users/default/Desktop/paper2020/data"
-tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+#year<-2001
+#dataDir <- "/Users/default/Desktop/paper2020/data"
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
 
 if (!year %in% 2001:2009) {
   print(paste("can not interpolate census data for", year))

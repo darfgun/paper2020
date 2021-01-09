@@ -31,13 +31,13 @@ cens_agrDir <- args[9]
 agr_by <- args[10]
 
 # TODO l?schen
-year <- 2010
-agr_by <- "nation"
+#year <- 2010
+#agr_by <- "nation"
 
- tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
- exp_tracDir <- "/Users/default/Desktop/paper2020/data/03_exp_tracts"
- censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
- cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
+# tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+# exp_tracDir <- "/Users/default/Desktop/paper2020/data/03_exp_tracts"
+# censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+# cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
 
 #tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
 #exp_tracDir <- "C:/Users/Daniel/Desktop/paper2020/data/03_exp_tracts"
