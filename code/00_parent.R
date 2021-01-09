@@ -18,7 +18,7 @@ sink(con, append=TRUE, type="message")
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
              "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat", "tictoc", 
-             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang")
+             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang","sets")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -139,4 +139,3 @@ for (year in years) {
    # Restore output to console
    sink(type="message", append = TRUE)
 }
-
