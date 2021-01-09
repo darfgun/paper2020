@@ -15,7 +15,7 @@ packages <- c("dplyr", "magrittr", "data.table", "testthat","tidyverse", "tictoc
               )
 
 for (p in packages) {
-  suppressWarnings(library(p, character.only = T, warn.conflicts = FALSE, quietly = TRUE))
+  suppressMessages(library(p, character.only = T, warn.conflicts = FALSE, quietly = TRUE))
 }
 options(dplyr.summarise.inform = FALSE)
 options(dplyr.join.inform = FALSE)
@@ -87,11 +87,13 @@ apply(states, 1, function(state) {
     exp_tracData <- file.path(exp_tracDir, year, paste0("exp_trac_", toString(year), "_", STUSPS, ".csv")) %>%
       read.csv
     
-    #TODO löschen?
+    #tigris does not provide all tract boundaries
     sym_dif<-sets::set_symdiff(exp_tracData$GEO_ID,trac_censData$GEO_ID) %>% unlist
     if (!is.null(sym_dif)){
       trac_censData_sub <- trac_censData %>% 
-        filter(GEO_ID %in% sym_dif) %>%
+        filter(GEO_ID %in% sym_dif) 
+      
+      trac_censData_sub<-trac_censData_sub%>%
         mutate(rowsum=rowSums(trac_censData_sub[,-c(1:4)])) %>%
         filter(rowsum >0)
       if(nrow(trac_censData_sub)>0){

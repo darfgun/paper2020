@@ -125,7 +125,7 @@ for (year in years) {
   ) 
    runscript(script=download.meta.script, args = args)
    if(year %in% 2001:2009){
-     runscript(script=interp.script, args = args)
+     #runscript(script=interp.script, args = args)
    }else{
      runscript(script=download.cens.script, args = args)
    }
