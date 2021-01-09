@@ -58,8 +58,8 @@ pafDir <- pafDir %>% file.path(., agr_by, year) # TODO drop year, everything in 
 dir.create(pafDir, recursive = T, showWarnings = F)
 
 # load some data
-states <- file.path(tmpDir, "states.csv") %>% read.csv()
-causes_ages <- file.path(tmpDir, "causes_ages.csv") %>% read.csv()
+states <- file.path(tmpDir, "states.csv") %>% read.csv
+causes_ages <- file.path(tmpDir, "causes_ages.csv") %>% read.csv
 
 ### -----calculation
 regions <- states[, agr_by] %>% unique
@@ -136,7 +136,7 @@ for (region in regions) {
     
     pafs[, agr_by] <- region
     
-    pafs <- left_join(pafs,census_meta, by= "variable")
+    pafs <- left_join(pafs,census_meta, by= c("censMeta.variable"="variable"))
       
     write.csv(pafs, pafDirX, row.names = FALSE)
     toc()

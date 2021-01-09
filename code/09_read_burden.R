@@ -35,13 +35,35 @@ pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
 totalBurdenDir <- "/Users/default/Desktop/paper2020/data/09_total_burden"
 
 #TODO
+pafDir <- file.path(totalBurdenDir,agr_by,year)
 totalBurdenDir<-file.path(totalBurdenDir,agr_by)
 files<-list.files(totalBurdenDir)
 
+states <- file.path(tmpDir, "states.csv") %>% read.csv
+##----- read paf------
+regions <- states[, agr_by] %>% unique
+pafs <- lapply(regions, function(region) {
+    file.path(pafDir, paste0("paf_", toString(year), "_", region, ".csv")) %>%
+        read.csv 
+}) %>%
+  do.call(rbind, .) %>%
+  as.data.frame
+
+replaces <- data.frame(from = c("NOT HISPANIC OR LATINO", "HISPANIC OR LATINO"), 
+                        to = c("Not Hispanic or Latino", "Hispanic or Latino"))
+
+pafs<-FindReplace(data = pafs, Var = "hispanic_origin", replaceData = replaces,
+                  from = "from", to = "to", exact = FALSE)
+
+replaces <- data.frame(from = c("WHITE","AMERICAN INDIAN AND ALASKA NATIVE", "ASIAN OR PACIFIC ISLANDER","BLACK OR AFRICAN AMERICAN"), 
+                        to = c("White", "American Indian or Alaska Native","Asian or Pacific Islander","Black or African American"))
+
+pafs<-FindReplace(data = pafs, Var = "race", replaceData = replaces,
+                  from = "from", to = "to", exact = FALSE)
+#TODO find and replace 
+##----- calculate attributable burden
 for(file in files){
   fileDir<-file.path(totalBurdenDir,file)
-  
-  #read.delim("~/Desktop/paper2020/data/09_total_burden/nation/cvd_ihd.txt")
   
   total_burden <- read.delim(fileDir) %>%
     filter(Single.Year.Ages !="Not Stated")  %>%
@@ -57,5 +79,14 @@ for(file in files){
   total_burden$cause_id <- rep(cause_id,nrow(total_burden))
   
   total_burden$Notes<-NULL
+  
+  #TODO if hispanic_origin not in colnames, year
+  if(!"Hispanic Origin" %in% colnames(total_burden))
+    total_burden[,"Hispanic Origin"] <- rep("all",nrow(total_burden))
+  
+  if(agr_by == "nation")
+    total_burden$region <- rep("us",nrow(total_burden))
+  
   #TODO join with paf
+  joined <- inner_join(pafs,total_burden) #TODO by
 }
