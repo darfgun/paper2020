@@ -31,20 +31,26 @@ agr_by <- args[10]
 pafDir <- args[11]
 
 # TODO löschen
-#year <- 2000
-#agr_by <- "nation"
+year <- 2010
+agr_by <- "nation"
 
-#tmpDir <- "/Users/default/Desktop/own_code2/data/tmp"
-#exp_rrDir <- "/Users/default/Desktop/own_code2/data/04_exp_rr"
-#censDir <- "/Users/default/Desktop/own_code2/data/06_demog"
-#cens_agrDir <- "/Users/default/Desktop/own_code2/data/07_census_agr"
-#pafDir <- "/Users/default/Desktop/own_code2/data/08_paf"
+tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+exp_rrDir <- "/Users/default/Desktop/paper2020/data/04_exp_rr"
+censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
+cens_agrDir <- "/Users/default/Desktop/paper2020/data/07_dem.agr"
+pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
 
+#/Users/default/Desktop/paper2020/data/07_dem.agr/nation/2010
 #tmpDir <- "C:/Users/Daniel/Desktop/paper2020/data/tmp"
 #exp_rrDir <- "C:/Users/Daniel/Desktop/paper2020/data/04_exp_rr"
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #cens_agrDir <- "C:/Users/Daniel/Desktop/paper2020/data/07_dem.agr"
 #pafDir <- "C:/Users/Daniel/Desktop/paper2020/data/08_paf"
+
+#load meta data
+census_meta <-  file.path(censDir,"meta", paste0("cens_meta_", toString(year), ".csv")) %>% 
+                     read.csv %>%
+                     select(variable,year,gender,gender_label,min_age,max_age,race,hispanic_origin)
 
 # create directories
 cens_agrDir <- cens_agrDir %>% file.path(., agr_by, year)
@@ -56,7 +62,7 @@ states <- file.path(tmpDir, "states.csv") %>% read.csv()
 causes_ages <- file.path(tmpDir, "causes_ages.csv") %>% read.csv()
 
 ### -----calculation
-regions <- states[, agr_by] %>% unique()
+regions <- states[, agr_by] %>% unique
 for (region in regions) {
   pafDirX <- paste0("paf_", toString(year), "_", region, ".csv") %>%
     file.path(pafDir, .)
@@ -127,8 +133,11 @@ for (region in regions) {
       return(result)
     }) %>% do.call(rbind, .)
 
+    
     pafs[, agr_by] <- region
-
+    
+    pafs <- left_join(pafs,census_meta, by= "variable")
+      
     write.csv(pafs, pafDirX, row.names = FALSE)
     toc()
   }

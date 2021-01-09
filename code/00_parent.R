@@ -94,6 +94,9 @@ agr_by <- "nation" # c("county","Census_Region","Census_division","hhs_region_nu
 paf.dir <- file.path(data.dir, "08_paf")
 dir.create(paf.dir, recursive = T, showWarnings = F)
 
+total.burden.dir <- file.path(data.dir, "04_exp_rr")
+if (!file.exists(total.burden.dir)) warning("The total burden data from CDC wonder need to be downloaded")
+
 # paths of scripts
 download.meta.script <- file.path(code.dir, "01_download_meta.R")
 download.cens.script <- file.path(code.dir, "02_download_cens.R")
@@ -104,10 +107,8 @@ mrbrtRR.script <- file.path(code.dir, "06_mrbrt_rr.R")
 cens_agr.script <- file.path(code.dir, "07_aggregate.R")
 paf.script <- file.path(code.dir, "08_paf.R")
 
-
-
 #--------parameters of code-------------------
-years <- c(2010,2000,2001)
+years <- c(2010)
 
 for (year in years) {
   args <- paste(
@@ -121,7 +122,8 @@ for (year in years) {
     dem.dir, # 8
     dem.agr.dir, # 9 
     agr_by, # 10
-    paf.dir # 11
+    paf.dir, # 11
+    total.burden.dir #12
   ) 
    runscript(script=download.meta.script, args = args)
    if(year %in% 2001:2009){
