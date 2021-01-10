@@ -13,7 +13,9 @@ rm(list = ls(all = TRUE))
 packages <- c("dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse", 
               "tigris", "tictoc", "cdcfluview","testthat","rlang")
 
-options(tigris_use_cache = FALSE)
+options(dplyr.summarise.inform = FALSE)
+options(dplyr.join.inform = FALSE)
+
 for (p in packages) {
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
@@ -26,7 +28,7 @@ tmpDir <- args[3]
 censDir <- args[8]
 
 #TODO l?schen
-#year <- 2000
+#year <- 2010
 
 #censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 #tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
@@ -119,9 +121,7 @@ apply(states, 1, function(state) {
       as.data.frame()
     
     #save data
-    
     fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
-    dem.state.data2 <- dem.state.dir %>% fread #TODO
     
     #make wider
     tic(paste("Made additional calculations with census data in year",toString(year), "in", name))
@@ -174,15 +174,12 @@ apply(states, 1, function(state) {
       dem.state.data[, var]<-dem.state.data[, var] %>% sapply(function(x) max(x,0))
     }
     
-    #drop Asian Alone, Pacific Islander alone in favor of combined race "ASIAn OR Pacific islander"
-    census_meta_sub <- census_meta %>% 
-      filter(race %in%c("ASIAN","NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER")) %>%
+    #filter relevant variables
+    relevant_variables <- census_meta %>% 
+      filter(relevant == TRUE) %>%
       select(variable)%>%
       unlist
-    
-    dem.state.data<-dem.state.data %>%
-              select(!census_meta_sub) #TODO all_of
-    
+
     #longer again
     dem.state.data <- dem.state.data %>%
       pivot_longer(
@@ -190,7 +187,8 @@ apply(states, 1, function(state) {
         names_to = "variable",
         values_to = "pop_size"
       ) %>% #TODO
-      filter(!is.na(pop_size))
+      filter(!is.na(pop_size),
+             variable %in% relevant_variables) 
     toc()
     
     test_that("02_download end", {
@@ -198,11 +196,11 @@ apply(states, 1, function(state) {
     expect_true(all(dem.state.data$pop_size >= 0))
     
     #TODO delete
-    if(!all(dem.state.data$pop_size >= 0)){
-      negativeRows<-dem.state.data[dem.state.data$pop_size < 0,]
-      variables_negative<- census_meta[census_meta$variable %in% (negativeRows$variable),]
-      browser()
-    }
+    #if(!all(dem.state.data$pop_size >= 0)){
+    #  negativeRows<-dem.state.data[dem.state.data$pop_size < 0,]
+    #  variables_negative<- census_meta[census_meta$variable %in% (negativeRows$variable),]
+    #  browser()
+    #}
     })
   
     #save demographic data in seperate file for each state

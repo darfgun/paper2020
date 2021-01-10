@@ -28,13 +28,13 @@ pafDir <- args[11]
 totalBurdenDir <- args[12]
 attrBurdenDir <- args[13]
 
-year <- 2010
-agr_by <- "nation"
+#year <- 2010
+#agr_by <- "nation"
 
-tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
-totalBurdenDir <- "/Users/default/Desktop/paper2020/data/09_total_burden"
-attrBurdenDir <- "/Users/default/Desktop/paper2020/data/10_attr_burd"
+#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+#pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
+#totalBurdenDir <- "/Users/default/Desktop/paper2020/data/09_total_burden"
+#attrBurdenDir <- "/Users/default/Desktop/paper2020/data/10_attr_burd"
 # TODO
 
 pafDir <- file.path(pafDir, agr_by, year)
@@ -97,18 +97,20 @@ if (!file.exists(attrBurdenDir)) {
     if (agr_by == "nation") {
       total_burden[, agr_by] <- "us"
     } # TODO
+    return(total_burden)
   }) %>%
     do.call(rbind, .) %>%
     as.data.frame
 
   ## ----- join total_burden and pafs-----
-  missing_label_causes <-prob::setdiff(pafs$label_cause, total_burden$label_cause)
-  if(length(missing_label_causes)){
-    warning(paste("Causes missing:"))
-    print(missing_label_causes)
-  } 
+  #TODO
+  #missing_label_causes <-prob::setdiff(pafs$label_cause, total_burden$label_cause)
+  #if(length(missing_label_causes)){
+  #  warning(paste("Causes missing:"))
+  #  print(missing_label_causes)
+  #} 
   
-  burden_paf <- inner_join(total_burden, pafs,
+  burden_paf <- inner_join(total_burden,pafs,
     by = c(
       "Gender" = "gender",
       "Gender.Code" = "gender_label",
@@ -119,7 +121,14 @@ if (!file.exists(attrBurdenDir)) {
       # agr_by=agr_by #TODO
     )
   )
-
+  
+  #filter those, where age in correct interval
+  burden_paf <- burden_paf %>%
+    filter(
+      (min_age <= Single.Year.Ages.Code & Single.Year.Ages.Code <= max_age) |
+        (Single.Year.Ages.Code == 100 & 100 <= min_age)
+    )
+  
   # test_that("09_read burden join", {
   #  total_burden_sub <- total_burden %>%
   #    filter(
@@ -136,12 +145,17 @@ if (!file.exists(attrBurdenDir)) {
   # })
 
   ## ----- calculate attributable burden------
-  burden_paf <- burden_paf %>%
-    filter(
-      (min_age <= Single.Year.Ages.Code & Single.Year.Ages.Code <= max_age) |
-        (Single.Year.Ages.Code == 100 & 100 <= min_age)
-    )
 
+  test_that("09_calc distinct rows",{
+    burden_paf_sub <- burden_paf %>%
+      select(Single.Year.Ages.Code,Gender.Code,Race,Year.Code,Hispanic.Origin,label_cause)
+    
+    dub_ind<-duplicated(burden_paf_sub) | duplicated(burden_paf_sub, fromLast = TRUE)
+    burden_paf_sub<-burden_paf[dub_ind,]
+    
+    expect_equal(nrow(burden_paf_sub),0)
+  })
+  
   attrBurden <- burden_paf %>%
     mutate(
       attrDeaths = Deaths * pafs,
@@ -149,8 +163,8 @@ if (!file.exists(attrBurdenDir)) {
     )
 
   attrBurden <- attrBurden %>%
-    # group_by(Year,Gender,Gender.Code,Race,min_age,max_age,Hispanic.Origin) %>%
-    group_by(Year, Race, Hispanic.Origin) %>%
+    group_by(Year,Gender,Gender.Code,Race,min_age,max_age,Hispanic.Origin) %>%
+    #group_by(Year,Gender,Gender.Code,Race,Hispanic.Origin) %>%
     summarize(
       Deaths = sum(Deaths),
       YLD = sum(YLD),
@@ -160,16 +174,24 @@ if (!file.exists(attrBurdenDir)) {
 
   test_that("09_read burden join2", {
     comp1 <- total_burden %>%
-      # group_by(Year,Gender,Gender.Code,Race,min_age,max_age,Hispanic.Origin) %>%
-      group_by(Year, Race, Hispanic.Origin) %>%
+      group_by(Year,Gender,Gender.Code,Race,Hispanic.Origin) %>%
       summarize(
         Deaths = sum(Deaths),
         YLD = sum(YLD)
-      ) %>%
-      join(attrBurden, by = c("Year","Race","Hispanic.Origin"))   %>%
+      ) 
+    
+    comp2<-attrBurden %>%
+      group_by(Year,Gender,Gender.Code,Race,Hispanic.Origin) %>%
+      summarize(
+        Deaths = sum(Deaths),
+        YLD = sum(YLD)
+      ) 
+      
+    comp3<-inner_join(comp1,comp2, by = c("Year","Gender","Gender.Code","Race","Hispanic.Origin"))  
+    comp3 %>%
       apply(1,function(row){
         expect_equal(row[["Deaths.x"]],row[["Deaths.y"]])
-        #TODO
+        expect_equal(row[["YLD.x"]],row[["YLD.y"]])
       })
   })
   fwrite(attrBurden, attrBurdenDir)

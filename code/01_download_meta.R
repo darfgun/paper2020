@@ -10,10 +10,14 @@
 rm(list = ls(all = TRUE))
 
 # load packages, install if missing
-packages <- c("dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse", 
-              "tigris", "tictoc", "cdcfluview","testthat","rlang")
+packages <- c(
+  "dplyr", "magrittr", "censusapi", "stringr", "data.table", "tidyverse",
+  "tigris", "tictoc", "cdcfluview", "testthat", "rlang"
+)
 
-options(tigris_use_cache = FALSE)
+options(dplyr.summarise.inform = FALSE)
+options(dplyr.join.inform = FALSE)
+
 for (p in packages) {
   suppressMessages(library(p, character.only = T, warn.conflicts = FALSE))
 }
@@ -25,11 +29,11 @@ year <- args[1]
 tmpDir <- args[3]
 censDir <- args[8]
 
-#TODO l?schen
+# TODO l?schen
 #year <- 2000
 
-#censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
-#tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
+# censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
+# tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
 
 #tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
 #censDir <- "/Users/default/Desktop/paper2020/data/06_demog"
@@ -44,14 +48,14 @@ if (!year %in% c(2000:2016)) {
 # download states data
 filepathStates <- file.path(tmpDir, "states.csv")
 if (!file.exists(filepathStates)) {
-  #only contiguous US
+  # only contiguous US
   # excluding Alaska, Hawaii, American Samoa, Guam, Commonwealth of the Northern Mariana Islands, Puerto Rico, United States Virgin Islands
   states1 <- states() %>%
-    as.data.frame %>%
+    as.data.frame() %>%
     select(c(REGION, DIVISION, STATEFP, STUSPS, NAME)) %>%
     filter(!(STUSPS %in% c("AK", "HI", "AS", "GU", "MP", "PR", "VI"))) %>%
     arrange(STATEFP) %>%
-    #rename it can be merged later
+    # rename it can be merged later
     setnames(
       c("REGION", "DIVISION"),
       c("Census_Region", "Census_division")
@@ -60,14 +64,14 @@ if (!file.exists(filepathStates)) {
   data(hhs_regions)
 
   states2 <- hhs_regions %>%
-    as.data.frame %>%
+    as.data.frame() %>%
     select(c(region_number, state_or_territory)) %>%
     setnames(
       c("state_or_territory", "region_number"),
       c("NAME", "hhs_region_number")
     )
-  
-  #merge for full information
+
+  # merge for full information
   states <- merge(states1, states2) %>%
     mutate(nation = "us")
 
@@ -79,7 +83,7 @@ rm(filepathStates)
 
 ### ------------------------download demographic data-----------------------------------------------------------------
 # Add key to .Renviron
-key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef" 
+key <- "d44ca9c0b07372ada0b5243518e89adcc06651ef"
 Sys.setenv(CENSUS_KEY = key)
 
 
@@ -93,16 +97,16 @@ filepathCensMeta <- paste0("cens_meta_", toString(year), ".csv") %>%
 # relevant groups for each year and table names
 if (year %in% 2000:2009) {
   # decennical census, sex by age for races
-  groups <- c("P012A", "P012B", "P012C", "P012D","P012E", "P012I","PCT012J", "PCT012K", "PCT012L", "PCT012M") 
+  groups <- c("P012A", "P012B", "P012C", "P012D", "P012E", "P012I", "PCT012J", "PCT012K", "PCT012L", "PCT012M")
   tablename <- "dec/sf1"
 } else if (year == 2010) {
   # decennical census, sex by age for races
-  groups <- c("PCT12A", "PCT12B", "PCT12C", "PCT12D", "PCT12E", "PCT12I", "PCT12J", "PCT12K", "PCT12L", "PCT12M") 
+  groups <- c("PCT12A", "PCT12B", "PCT12C", "PCT12D", "PCT12E", "PCT12I", "PCT12J", "PCT12K", "PCT12L", "PCT12M")
   tablename <- "dec/sf1"
 } else if (year %in% 2011:2016) {
   # american community survey, sex by age for races
   groups <- c("B01001A", "B01001B", "B01001C", "B01001D", "B01001E", "B01001H")
-  #"not hispanic or latino" only available for white
+  # "not hispanic or latino" only available for white
   tablename <- "acs/acs5"
 }
 
@@ -114,8 +118,9 @@ if (!file.exists(filepathCensMeta)) {
     listCensusMetadata(
       name = tablename,
       vintage = ifelse(year %in% 2001:2009,
-                       2000,
-                       year),
+        2000,
+        year
+      ),
       type = "variables",
       group = group
     ) %>%
@@ -123,8 +128,8 @@ if (!file.exists(filepathCensMeta)) {
       mutate(
         year = year,
         group = group,
-        
-        ##parse "label", "concept" from String to seperate columns
+
+        ## parse "label", "concept" from String to seperate columns
         label = strsplit(label, "!!"),
 
         datatype = sapply(label, function(l) {
@@ -145,7 +150,7 @@ if (!file.exists(filepathCensMeta)) {
         }),
 
         label_len = sapply(label, length),
-        #extracts gender
+        # extracts gender
         gender = label %>% sapply(function(l) l[2]),
         gender_label = gender %>% sapply(function(g) ifelse(g == "Female", "F", "M")),
         age = label %>% sapply(function(l) l[3]),
@@ -158,7 +163,7 @@ if (!file.exists(filepathCensMeta)) {
           str_extract(a, "[:digit:]+") %>%
             as.numeric()
         }),
-        
+
         max_age = age %>% sapply(function(a) {
           # if includes "and over", max_age = 150, since humans do not get older
           if (grepl("and over", a)) {
@@ -176,7 +181,7 @@ if (!file.exists(filepathCensMeta)) {
             return(last_num)
           }
         }),
-        
+
         age = NULL,
         label = NULL,
         race_his = concept %>% sapply(function(conc) {
@@ -185,7 +190,7 @@ if (!file.exists(filepathCensMeta)) {
           regmatches(conc, gregexpr("(?<=\\().*?(?=\\))", conc, perl = T))[[1]]
         }),
         concept = NULL,
-        #extract race
+        # extract race
         race = race_his %>% sapply(function(race_his) {
           race_his %>%
             strsplit(., ",") %>%
@@ -200,7 +205,7 @@ if (!file.exists(filepathCensMeta)) {
           a <- race_his %>%
             strsplit(., ",") %>%
             unlist()
-          #if no comma, "all"
+          # if no comma, "all"
           ifelse(length(a) <= 1,
             "all",
             a[2] %>% substring(., 2)
@@ -215,7 +220,7 @@ if (!file.exists(filepathCensMeta)) {
     filter(
       label_len == 3, # filters granular data with gender and age group
       datatype == "Estimate" # filters Estimates, excluding Annotations and Margins of Error
-    ) %>% 
+    ) %>%
     mutate(
       label_len = NULL,
       datatype = NULL
@@ -244,14 +249,15 @@ if (!file.exists(filepathCensMeta)) {
   census_meta <- census_meta %>%
     mutate(
       downloaded = TRUE,
+      relevant = TRUE,
       tot_var = NA,
       ntot_var = NA
     )
-  
-  #find pairs "all", "NOT HISPANIC OR LATINO"
+
+  # find pairs "all", "NOT HISPANIC OR LATINO"
   census_meta_all <- census_meta %>% filter(hispanic_origin == "all")
   census_meta_nhis <- census_meta %>% filter(hispanic_origin == "NOT HISPANIC OR LATINO")
-  
+
   for (i in 1:nrow(census_meta_all)) {
     # for each row with hisp. or. "all", find all corresponding rows in "NOT HISPANIC OR LATINO"
     # with same age group, year, gender, race
@@ -264,7 +270,7 @@ if (!file.exists(filepathCensMeta)) {
         min_age >= row[["min_age"]],
         max_age <= row[["max_age"]]
       )
-    
+
     # if truly corresponds, add row
     if (nrow(census_meta_nhis_sub) > 0 &&
       row[["min_age"]] == (census_meta_nhis_sub$min_age %>% min()) &&
@@ -272,6 +278,7 @@ if (!file.exists(filepathCensMeta)) {
       row_copy <- row %>% mutate(
         tot_var = variable,
         downloaded = FALSE,
+        relevant = TRUE,
         variable = paste0(variable, "C"),
         hispanic_origin = "HISPANIC OR LATINO"
       )
@@ -280,11 +287,17 @@ if (!file.exists(filepathCensMeta)) {
       census_meta <- rbind(census_meta, row_copy)
     }
   }
-  
-  #find pairs asian, pacific islander
+
+  # find pairs asian, pacific islander
+  # TODO
+  census_meta <- census_meta %>%
+    mutate(relevant = ifelse(race %in% c("ASIAN", "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER"),
+      FALSE,
+      relevant
+    ))
   census_meta_asian <- census_meta %>% filter(race == "ASIAN")
   census_meta_pac <- census_meta %>% filter(race == "NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER")
-  
+
   for (i in 1:nrow(census_meta_asian)) {
     row <- census_meta_asian[i, ]
     census_meta_pac_sub <- census_meta_pac %>%
@@ -295,24 +308,52 @@ if (!file.exists(filepathCensMeta)) {
         max_age == row[["max_age"]],
         hispanic_origin == row[["hispanic_origin"]]
       )
-    
+
     # if truly corresponds, add row
-    if (nrow(census_meta_pac_sub) == 1){
+    if (nrow(census_meta_pac_sub) == 1) {
       row_copy <- row %>% mutate(
         downloaded = FALSE,
         variable = paste0(variable, "P"),
-        race = "ASIAN OR PACIFIC ISLANDER"
+        race = "ASIAN OR PACIFIC ISLANDER",
+        ntot_var = NA,
+        relevant = TRUE
       )
       variable_asian <- row[["variable"]]
-      variable_pac <- census_meta_pac_sub[1,"variable"]
-      
-      row_copy$tot_var[1] <- list(c(variable_asian,variable_pac))
-      row_copy$ntot_var[1] <- NA
-      
+      variable_pac <- census_meta_pac_sub[1, "variable"]
+
+      row_copy$tot_var[1] <- list(c(variable_asian, variable_pac))
       census_meta <- rbind(census_meta, row_copy)
     }
   }
+
+  # aggregate 100+
+  census_meta <- census_meta %>%
+    mutate(relevant = ifelse(min_age >= 100,
+      FALSE,
+      relevant
+    ))
+
+  census_meta_old <- census_meta %>%
+    filter(
+      min_age >= 100,
+      relevant == TRUE
+    ) %>%
+    group_by(year, gender, gender_label, race, hispanic_origin) %>%
+    summarise(tot_var = list(variable)) 
   
+  census_meta_old<-census_meta_old%>%
+    mutate(
+      ntot_var = NA,
+      group = NA,
+      min_age = 100,
+      max_age = 150,
+      age_group_id = 95,
+      downloaded = FALSE,
+      relevant = TRUE,
+      variable = sapply(tot_var, function(list) paste0(list[[1]], "O"))
+    )
+
+  census_meta <- rbind(census_meta, census_meta_old)
   fwrite(census_meta, filepathCensMeta)
   toc()
 }

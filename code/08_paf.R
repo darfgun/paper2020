@@ -126,9 +126,9 @@ for (region in regions) {
         pafs
       )
       
-      #test_that("07_paf sum(props)", {
-      #  expect_equal(any(is.na(result)), FALSE)
-      #})
+      test_that("07_paf sum(props)", {
+        expect_false(any(is.na(result)))
+      })
       
       return(result)
     }) %>% do.call(rbind, .)
@@ -138,7 +138,11 @@ for (region in regions) {
     
     pafs <- left_join(pafs,census_meta, by= c("censMeta.variable"="variable"))%>%
                 select(!censMeta.variable)
-                            
+    
+    test_that("07_paf distinct rows", {
+      pafs_dis<-pafs %>% distinct(label_cause,year,gender_label,min_age,max_age,race,hispanic_origin)
+      expect_equal(nrow(pafs_dis),nrow(pafs))
+    })                        
       
     write.csv(pafs, pafDirX, row.names = FALSE)
     toc()
