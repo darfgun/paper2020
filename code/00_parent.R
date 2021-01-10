@@ -18,7 +18,7 @@ sink(con, append=TRUE, type="message")
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
              "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat", "tictoc", 
-             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang","sets")
+             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang","prob")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -35,6 +35,10 @@ if ("rhdf5" %in% rownames(installed.packages()) == FALSE) {
   BiocManager::install("rhdf5")
 }
 
+#download DataCombine
+if ("DataCombine" %in% rownames(installed.packages()) == FALSE) {
+  devtools::install_github('christophergandrud/DataCombine')
+}
 # runtime configuration
 # run cripts from command line depending on OS
 if (Sys.info()["sysname"] == "Darwin") {
@@ -94,8 +98,11 @@ agr_by <- "nation" # c("county","Census_Region","Census_division","hhs_region_nu
 paf.dir <- file.path(data.dir, "08_paf")
 dir.create(paf.dir, recursive = T, showWarnings = F)
 
-total.burden.dir <- file.path(data.dir, "04_exp_rr")
+total.burden.dir <- file.path(data.dir, "09_total_burden")
 if (!file.exists(total.burden.dir)) warning("The total burden data from CDC wonder need to be downloaded")
+
+attr.burden.dir <- file.path(data.dir, "10_attr_burd")
+dir.create(attr.burden.dir, recursive = T, showWarnings = F)
 
 # paths of scripts
 download.meta.script <- file.path(code.dir, "01_download_meta.R")
@@ -106,9 +113,11 @@ assignTract.script <- file.path(code.dir, "05_ass_trac.R")
 mrbrtRR.script <- file.path(code.dir, "06_mrbrt_rr.R")
 cens_agr.script <- file.path(code.dir, "07_aggregate.R")
 paf.script <- file.path(code.dir, "08_paf.R")
+calc.attr.burd.script <- file.path(code.dir, "09_calc_attr_burd.R")
 
 #--------parameters of code-------------------
 years <- c(2010)
+
 
 for (year in years) {
   args <- paste(
@@ -123,7 +132,8 @@ for (year in years) {
     dem.agr.dir, # 9 
     agr_by, # 10
     paf.dir, # 11
-    total.burden.dir #12
+    total.burden.dir, #12
+    attr.burden.dir #13
   ) 
    runscript(script=download.meta.script, args = args)
    if(year %in% 2001:2009){
@@ -136,6 +146,7 @@ for (year in years) {
    runscript(script=mrbrtRR.script, args = args)
    runscript(script = cens_agr.script, args = args)
    runscript(script = paf.script, args = args)
+   runscript(script = calc.attr.burd.script, args = args)
    
    #save console
    #  Restore output to console
