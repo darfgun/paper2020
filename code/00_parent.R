@@ -18,7 +18,7 @@ sink(con, append=TRUE, type="message")
 #install packages if missing
 packages <-c("cdcfluview","censusapi","data.table","dplyr", "ggplot2", "magrittr",
              "MALDIquant","plyr","RCurl","sf","sp","stringr","testthat", "tictoc", 
-             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang","prob")
+             "tidyverse","tigris","tmap","viridis","hrbrthemes","rlang")
 
 options(tigris_use_cache = FALSE)
 for (p in packages) {
@@ -143,9 +143,12 @@ for (year in years) {
    }
    runscript(script=download.other.script, args = args)
    runscript(script=assignTract.script, args = args)
+   sink(type="message", append = TRUE)
    #runscript(script=mrbrtRR.script, args = args)
    runscript(script = cens_agr.script, args = args)
+   sink(type="message", append = TRUE)
    runscript(script = paf.script, args = args)
+   sink(type="message", append = TRUE)
    runscript(script = calc.attr.burd.script, args = args)
    
    #save console

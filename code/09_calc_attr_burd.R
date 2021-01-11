@@ -28,13 +28,13 @@ pafDir <- args[11]
 totalBurdenDir <- args[12]
 attrBurdenDir <- args[13]
 
-#year <- 2010
-#agr_by <- "nation"
+year <- 2010
+agr_by <- "nation"
 
-#tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
-#pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
-#totalBurdenDir <- "/Users/default/Desktop/paper2020/data/09_total_burden"
-#attrBurdenDir <- "/Users/default/Desktop/paper2020/data/10_attr_burd"
+tmpDir <- "/Users/default/Desktop/paper2020/data/tmp"
+pafDir <- "/Users/default/Desktop/paper2020/data/08_paf"
+totalBurdenDir <- "/Users/default/Desktop/paper2020/data/09_total_burden"
+attrBurdenDir <- "/Users/default/Desktop/paper2020/data/10_attr_burd"
 # TODO
 
 pafDir <- file.path(pafDir, agr_by, year)

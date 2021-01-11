@@ -30,7 +30,7 @@ tmpDir <- args[3]
 censDir <- args[8]
 
 # TODO l?schen
-#year <- 2000
+#year <- 2010
 
 # censDir <- "C:/Users/Daniel/Desktop/paper2020/data/06_demog"
 # tmpDir <-  "C:/Users/Daniel/Desktop/paper2020/data/tmp"
@@ -327,12 +327,6 @@ if (!file.exists(filepathCensMeta)) {
   }
 
   # aggregate 100+
-  census_meta <- census_meta %>%
-    mutate(relevant = ifelse(min_age >= 100,
-      FALSE,
-      relevant
-    ))
-
   census_meta_old <- census_meta %>%
     filter(
       min_age >= 100,
@@ -352,7 +346,13 @@ if (!file.exists(filepathCensMeta)) {
       relevant = TRUE,
       variable = sapply(tot_var, function(list) paste0(list[[1]], "O"))
     )
-
+  
+  census_meta <- census_meta %>%
+    mutate(relevant = ifelse(min_age >= 100,
+                             FALSE,
+                             relevant
+    ))
+  
   census_meta <- rbind(census_meta, census_meta_old)
   fwrite(census_meta, filepathCensMeta)
   toc()
