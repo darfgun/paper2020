@@ -115,7 +115,8 @@ apply(states, 1, function(state) {
           cols = !c("state", "county", "tract", "GEO_ID"),
           names_to = "variable",
           values_to = "pop_size"
-        )
+        ) %>%
+        filter()
       toc()
       return(data)
     }) %>%
@@ -131,9 +132,8 @@ apply(states, 1, function(state) {
 
     # show progress
     pb <- txtProgressBar(1, nrow(census_meta_sub), style = 3)
-    for (i in 1:nrow(census_meta_sub)) {
+    list <- lapply(1:nrow(census_meta_sub), function(i) {
       var <- census_meta_sub[i, "variable"]
-
       # parse String "A|B|C..." to vector c(A,B,C,...)
       tot_var <- census_meta_sub[i, "tot_var"] %>%
         strsplit(., "|", fixed = TRUE) %>%
@@ -144,19 +144,31 @@ apply(states, 1, function(state) {
         unlist()
 
       # calculate difference
+      #tic(2.1)
       dem.state.data.tot <- dem.state.data %>%
-        filter(variable %in% tot_var) %>%
+        filter(variable %in% tot_var) 
+      #toc()
+      #tic(2.2)
+      dem.state.data.tot <- dem.state.data %>%
         group_by(state, county, tract, GEO_ID) %>%
         summarise(pop_size_tot = sum(pop_size))
-
+      #toc()
+      #tic(2.3)
+      #https://stackoverflow.com/questions/7722493/how-does-one-aggregate-and-summarize-data-quickly
+      #dem.state.data.tot2 <- setDT(dem.state.data)[,.(pop_size_tot = sum(pop_size)), by = 'state,county,tract,GEO_ID']
+      #toc()
+      #tic(3)
       dem.state.data.ntot <- dem.state.data %>%
         filter(variable %in% ntot_var) %>%
         group_by(state, county, tract, GEO_ID) %>%
         summarise(pop_size_ntot = sum(pop_size))
-      
-      dem.state.data.dif <- full_join(dem.state.data.tot,dem.state.data.ntot,
-                                      by = c("state", "county", "tract", "GEO_ID")) 
-
+      #toc()
+      #tic(4)
+      dem.state.data.dif <- full_join(dem.state.data.tot, dem.state.data.ntot,
+        by = c("state", "county", "tract", "GEO_ID")
+      )
+      #toc()
+      #tic(5)
       dem.state.data.dif <- dem.state.data.dif %>%
         mutate(
           variable = var,
@@ -164,10 +176,15 @@ apply(states, 1, function(state) {
           pop_size_tot = NULL,
           pop_size_ntot = NULL,
         )
-
-      dem.state.data <- rbind(dem.state.data, dem.state.data.dif)
+      #toc()
       setTxtProgressBar(pb, i)
-    }
+      return(dem.state.data.dif)
+    })
+    
+    #tic(6)
+    list[["actual"]] <- dem.state.data
+    dem.state.data <- rbindlist(list, use.names = TRUE)
+    #toc()
 
     # filter relevant variables
     relevant_variables <- census_meta %>%

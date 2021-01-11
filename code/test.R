@@ -1,8 +1,4 @@
-SEQ  <- seq(1,100000)
-pb   <- txtProgressBar(1, 100000, style=3)
-TIME <- Sys.time()
-for(i in SEQ){
-     Sys.sleep(0.00002)
-     setTxtProgressBar(pb, i)
-}
-Sys.time() - TIME
+df<-data.frame(a = list(0,1), b=list(2,3))
+list<-apply(df,1,function(row){
+  return(sum(row))
+})
