@@ -1,3 +1,8 @@
-total_burden_dis <- total_burden %>%
-        distinct(Single.Year.Ages.Code,Gender.Code,Race,Year.Code,Hispanic.Origin,label_cause,#TODO regionagr
-                 .keep_all = TRUE)
+SEQ  <- seq(1,100000)
+pb   <- txtProgressBar(1, 100000, style=3)
+TIME <- Sys.time()
+for(i in SEQ){
+     Sys.sleep(0.00002)
+     setTxtProgressBar(pb, i)
+}
+Sys.time() - TIME

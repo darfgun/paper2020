@@ -129,6 +129,8 @@ apply(states, 1, function(state) {
     tic(paste("Made additional calculations with census data in year", toString(year), "in", name))
     census_meta_sub <- census_meta %>% filter(downloaded == FALSE)
 
+    # show progress
+    pb <- txtProgressBar(1, nrow(census_meta_sub), style = 3)
     for (i in 1:nrow(census_meta_sub)) {
       var <- census_meta_sub[i, "variable"]
 
@@ -142,23 +144,29 @@ apply(states, 1, function(state) {
         unlist()
 
       # calculate difference
-      dem.state.data.dif <- dem.state.data %>%
+      dem.state.data.tot <- dem.state.data %>%
+        filter(variable %in% tot_var) %>%
         group_by(state, county, tract, GEO_ID) %>%
-        summarise(
-          pop_size_tot = sum(pop_size[variable %in% tot_var]),
-          pop_size_ntot = sum(pop_size[variable %in% ntot_var])
-        )
+        summarise(pop_size_tot = sum(pop_size))
+
+      dem.state.data.ntot <- dem.state.data %>%
+        filter(variable %in% ntot_var) %>%
+        group_by(state, county, tract, GEO_ID) %>%
+        summarise(pop_size_ntot = sum(pop_size))
+      
+      dem.state.data.dif <- full_join(dem.state.data.tot,dem.state.data.ntot,
+                                      by = c("state", "county", "tract", "GEO_ID")) 
 
       dem.state.data.dif <- dem.state.data.dif %>%
         mutate(
-          variable =var,
+          variable = var,
           pop_size = max(0, pop_size_tot - pop_size_ntot),
           pop_size_tot = NULL,
           pop_size_ntot = NULL,
         )
 
       dem.state.data <- rbind(dem.state.data, dem.state.data.dif)
-      print(paste(i,"/",nrow(census_meta_sub)))
+      setTxtProgressBar(pb, i)
     }
 
     # filter relevant variables
@@ -172,13 +180,13 @@ apply(states, 1, function(state) {
         variable %in% relevant_variables
       )
 
-    #test basic properties
+    # test basic properties
     test_that("02_download end", {
       expect_false(any(is.na(dem.state.data)))
       expect_true(all(dem.state.data$pop_size >= 0))
     })
     toc()
-    
+
     # save demographic data in seperate file for each state
     fwrite(dem.state.data, dem.state.dir, row.names = FALSE)
     toc()
